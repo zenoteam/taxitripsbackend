@@ -23,7 +23,7 @@ module.exports = (ws, payload) => {
    var controller;
    try {
       // require the file requested
-      controller = require('./' + sAction[0])
+      controller = require('./controllers/' + sAction[0])
    } catch (e) {
       // if the file does not exist
       return helpers.outputResponse(ws, { error: "Requested resource not found", action: requestAction.inputError })
