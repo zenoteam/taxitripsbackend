@@ -1,16 +1,17 @@
 {
-  "name": "zeno-socket",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "mongoose": "^5.11.13",
-    "socket.io": "^2.1.1",
-    "validator": "^13.5.2"
-  }
+   "name": "zeno-socket",
+   "version": "1.0.0",
+   "description": "",
+   "main": "index.js",
+   "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1",
+      "start": "node index.js"
+   },
+   "author": "",
+   "license": "ISC",
+   "dependencies": {
+      "mongoose": "^5.11.13",
+      "socket.io": "^2.1.1",
+      "validator": "^13.5.2"
+   }
 }
