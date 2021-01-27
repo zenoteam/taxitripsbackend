@@ -15,12 +15,15 @@ module.exports = (ws, payload) => {
    //payload.action carries the url down to the method to be executed.
    //so we split the slash (/) to get the file and the method name 
    let sAction = payload.action.split("/") //split the payload
+
    //check if the payload not exact length
    if (sAction.length !== 2) {
       return helpers.outputResponse(ws, { error: "Requested resource not found", action: requestAction.inputError })
    }
+
    //trying to require the file 
    var controller;
+
    try {
       // require the file requested
       controller = require('./controllers/' + sAction[0])

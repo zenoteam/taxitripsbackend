@@ -1,61 +1,34 @@
 const helpers = require('../assets/helpers')
 const requestAction = require('../assets/requestAction')
-const driverModel = require('../models/driver')
+const tripRidersMethod = require('./trip_method/rider_method')
+const validator = require('validator')
 const socketUser = require('../assets/socketUser')
+const driverMethod = require('./trip_method/driver_method')
+
 const trip = {}
 
-// A private function that handles class a driver search
-const RiderTypeA = async (ws, payload) => {
-   //find the rider withing the location
-   let getDriver = await driverModel.aggregate([
-      {
-         $geoNear: {
-            "near": { "type": "Point", "coordinates": [parseFloat(lon), parseFloat(lat)] },
-            "distanceField": "location.distance",
-            "minDistance": 0,
-            "spherical": true,
-            "maxDistance": 15000,
-            "distanceMultiplier": 0.001
-         }
-      },
-      { $match: { on_trip: false, online: true } },
-      { $project: { location: 1 } },
-      { $limit: 1 },
-   ])
 
-   //check if there error or no driver
-   if (!getDriver) {
-      return helpers.outputResponse(ws, { action: requestAction.driverNotFound })
-   }
-
-   //if there's a driver, hold the trip as pending together with the driver's details
-   let userUniqueID = ws.user_auth_id
-
-   socketUser.pendingTrip[userUniqueID] = { payload, driver: ['driver-unqiue-id'] }
-
-   //send the request to the driver
-   let sendData = {
-      action: requestAction.newTripRequest,
-      ...payload
-   }
-   helpers.outputResponse(ws, sendData, 'driver-unique-id')
-}
-
-
-//this method is to find a rider.
-//the required params from payload should be longitude, latitude, class, name, address, avatar
-trip.requestRider = (ws, payload) => {
-   let lon = helpers.getInputValueNumber(payload, 'longitude')
-   let lat = helpers.getInputValueNumber(payload, 'latitude')
-   let name = helpers.getInputValueNumber(payload, 'name')
-   let startAdrr = helpers.getInputValueNumber(payload, 'start_address')
-   let endAddr = helpers.getInputValueNumber(payload, 'end_address')
-   let avatar = helpers.getInputValueNumber(payload, 'avatar')
-   let rideClass = helpers.getInputValueNumber(payload, 'class')
+//this method is to find a driver
+trip.requestDriver = (ws, payload) => {
+   let startLongitude = helpers.getInputValueNumber(payload, 'start_lon')
+   let startLatitude = helpers.getInputValueNumber(payload, 'start_lat')
+   let endLongitude = helpers.getInputValueNumber(payload, 'end_lon')
+   let endLatitude = helpers.getInputValueNumber(payload, 'end_lat')
+   let distance = helpers.getInputValueNumber(payload, 'distance')
+   let name = helpers.getInputValueString(payload, 'name')
+   let phone = helpers.getInputValueString(payload, 'phone')
+   let startAdrr = helpers.getInputValueString(payload, 'start_address')
+   let endAddr = helpers.getInputValueString(payload, 'end_address')
+   let avatar = helpers.getInputValueString(payload, 'avatar')
+   let rideClass = helpers.getInputValueString(payload, 'class')
 
    //check and validate the input
-   if (isNaN(lon) || isNaN(lat)) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid longitude and latitude is required" })
+   if (isNaN(startLongitude) || isNaN(startLatitude)) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid start longitude and latitude is required" })
+   }
+   //check and validate the input
+   if (isNaN(endLongitude) || isNaN(endLatitude)) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid end longitude and latitude is required" })
    }
    //check if the name is empty
    if (!name || name.length < 2) {
@@ -69,6 +42,12 @@ trip.requestRider = (ws, payload) => {
    if (!endAddr || endAddr.length < 2) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "End address is required" })
    }
+   if (!phone || phone.length < 10) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Phone is required" })
+   }
+   if (!distance || isNaN(distance)) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Distance is required" })
+   }
    //check if the name is empty
    if (!avatar) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Avatar is required" })
@@ -81,10 +60,70 @@ trip.requestRider = (ws, payload) => {
    // do the trip request switch
    switch (rideClass) {
       case 'A':
-         RiderTypeA(ws, payload);
+         tripRidersMethod.RequestTypeA(ws, payload);
+         break;
+      case 'B':
+         tripRidersMethod.RequestTypeB(ws, payload);
+         break;
+      case 'C':
+         tripRidersMethod.RequestTypeC(ws, payload);
+         break;
+      case 'D':
+         tripRidersMethod.RequestTypeD(ws, payload);
          break;
       default:
          helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid request" })
    }
 
 }
+
+//for a driver to accept a request
+trip.acceptRequest = (ws, payload) => {
+   let longitude = helpers.getInputValueNumber(payload, 'lon') //the driver's geo latitude
+   let latitude = helpers.getInputValueNumber(payload, 'lat') //the driver's geo longitude
+   let name = helpers.getInputValueString(payload, 'name') //driver's email
+   let phone = helpers.getInputValueString(payload, 'phone') //driver's phone
+   let email = helpers.getInputValueString(payload, 'email') //the driver's email
+   let avatar = helpers.getInputValueString(payload, 'avatar') //the driver's image url
+   let rideClass = helpers.getInputValueString(payload, 'class') //the class of ride the driver is accepting
+   let riderId = helpers.getInputValueString(payload, 'rider_id') //the id of the person who made the request
+
+   //validate the payload
+   if (isNaN(longitude) || isNaN(latitude)) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid latitude and longitude is required" })
+   }
+   if (!name || name.length < 1) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Name is required" })
+   }
+   if (!phone || phone.length < 10) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Phone is required" })
+   }
+   if (!email || !validator.default.isEmail(email)) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid email is required" })
+   }
+   if (['A', 'B', 'C', 'D'].indexOf(rideClass) === -1) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid class" })
+   }
+   if (!riderId) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Rider id is required" })
+   }
+
+   //check if the request is still availabe to accept
+   if (socketUser.pendingTrip[riderId] && socketUser.pendingTrip[riderId].class === rideClass) {
+      //get the data from pending request
+      let rData = socketUser.pendingTrip[riderId]
+
+      //switch the request by class
+      switch (rideClass) {
+         case 'A':
+            driverMethod.RequestTypeA(ws, payload, rData)
+            break;
+         case 'B':
+            driverMethod.RequestTypeB(ws, payload, rData)
+         default:
+            helpers.outputResponse(ws, { action: requestAction.inputError, error: "Unknown Request" })
+      }
+   }
+}
+
+module.exports = trip;

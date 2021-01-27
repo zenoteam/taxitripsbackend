@@ -3,10 +3,26 @@ const Schema = dbConnector.mongoose.Schema;
 
 const drivers = new Schema({
    id: Schema.Types.ObjectId,
-   user: {
+   user_id: {
       type: String,
       required: true,
       unique: true
+   },
+   user_approve: {
+      type: Boolean,
+      required: true,
+   },
+   car_plate_number: {
+      type: String,
+      required: true,
+   },
+   car_color: {
+      type: String,
+      required: true,
+   },
+   car_model: {
+      type: String,
+      required: true,
    },
    online: {
       type: Boolean,
@@ -29,12 +45,9 @@ const drivers = new Schema({
    },
    riders: {
       type: Array,
+      default: [],
       maxlength: 4,
    },
-   class: {
-      type: String,
-      enum: ['A', 'B', 'C', 'D']
-   }
 }, {
    timestamps: true,
    minimize: false,
