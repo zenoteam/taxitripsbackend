@@ -1,7 +1,10 @@
+const socketUser = require("./socketUser");
+
 const helpers = {}
 
 
-helpers.zenoTripDB = 'mongodb://localhost:27017/zeno_trip';
+helpers.zenoTripDBLocal = 'mongodb://localhost:27017/zeno_trip';
+helpers.zenoTripDBLIve = 'mongodb+srv://increase_21:QRudhu0Fsw0b166S@cluster0-mszft.mongodb.net/zeno_trip?retryWrites=true&w=majority';
 
 
 // for generating token
@@ -45,6 +48,7 @@ helpers.outputResponse = (ws, payload, ws_id) => {
          ws.emit('msg', payload)
       }
    } catch (e) {
+      // console.log(e)
       //catch any error
    }
 }

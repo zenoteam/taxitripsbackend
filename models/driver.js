@@ -8,6 +8,11 @@ const drivers = new Schema({
       required: true,
       unique: true
    },
+   user_email: {
+      type: String,
+      required: true,
+      unique: true
+   },
    user_approve: {
       type: Boolean,
       required: true,
@@ -18,18 +23,20 @@ const drivers = new Schema({
    },
    car_color: {
       type: String,
-      required: true,
+      // required: true,
    },
    car_model: {
       type: String,
-      required: true,
+      // required: true,
    },
    online: {
       type: Boolean,
+      required: true,
       default: false
    },
    on_trip: {
       type: Boolean,
+      required: true,
       default: false
    },
    location: {
@@ -42,12 +49,7 @@ const drivers = new Schema({
          type: [Number],
          required: true
       },
-   },
-   riders: {
-      type: Array,
-      default: [],
-      maxlength: 4,
-   },
+   }
 }, {
    timestamps: true,
    minimize: false,

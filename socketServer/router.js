@@ -10,7 +10,7 @@ const requestAction = require('./assets/requestAction')
 module.exports = (ws, payload) => {
    //check if there's no payload
    if (!payload || typeof payload.action !== 'string') {
-      return helpers.outputResponse(ws, { error: "Requested resource does not exist", action: requestAction.inputError })
+      return helpers.outputResponse(ws, { error: "Endpoint not specified", action: requestAction.inputError })
    }
    //payload.action carries the url down to the method to be executed.
    //so we split the slash (/) to get the file and the method name 
@@ -18,7 +18,7 @@ module.exports = (ws, payload) => {
 
    //check if the payload not exact length
    if (sAction.length !== 2) {
-      return helpers.outputResponse(ws, { error: "Requested resource not found", action: requestAction.inputError })
+      return helpers.outputResponse(ws, { error: "Endpoint not specified", action: requestAction.inputError })
    }
 
    //trying to require the file 
@@ -28,13 +28,18 @@ module.exports = (ws, payload) => {
       // require the file requested
       controller = require('./controllers/' + sAction[0])
    } catch (e) {
+      // console.log(e)
       // if the file does not exist
       return helpers.outputResponse(ws, { error: "Requested resource not found", action: requestAction.inputError })
    }
 
    //if the file exist and the method exist, execute the method
    if (typeof controller[sAction[1]] === 'function') {
-      controller[sAction[1]](ws, payload) //pass in the variable needed by the function
+      try {
+         controller[sAction[1]](ws, payload) //pass in the variable needed by the function
+      } catch (e) {
+         return helpers.outputResponse(ws, { error: "Requested resource is unavailable", action: requestAction.inputError })
+      }
    } else {
       //if the method does not exist
       return helpers.outputResponse(ws, { error: "Requested resource not found", action: requestAction.inputError })

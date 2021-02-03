@@ -4,6 +4,7 @@ const tripRidersMethod = require('./trip_method/rider_method')
 const validator = require('validator')
 const socketUser = require('../assets/socketUser')
 const driverMethod = require('./trip_method/driver_method')
+const riderMethod = require('./trip_method/rider_method')
 
 const trip = {}
 
@@ -57,19 +58,15 @@ trip.requestDriver = (ws, payload) => {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid class" })
    }
 
+   payload.name = payload.name.split(" ")[0]
+
    // do the trip request switch
    switch (rideClass) {
       case 'A':
-         tripRidersMethod.RequestTypeA(ws, payload);
+         tripRidersMethod.RequestClassA(ws, payload);
          break;
       case 'B':
-         tripRidersMethod.RequestTypeB(ws, payload);
-         break;
-      case 'C':
-         tripRidersMethod.RequestTypeC(ws, payload);
-         break;
-      case 'D':
-         tripRidersMethod.RequestTypeD(ws, payload);
+         tripRidersMethod.RequestClassB(ws, payload);
          break;
       default:
          helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid request" })
@@ -116,14 +113,98 @@ trip.acceptRequest = (ws, payload) => {
       //switch the request by class
       switch (rideClass) {
          case 'A':
-            driverMethod.RequestTypeA(ws, payload, rData)
+            driverMethod.AcceptClassA(ws, payload, rData)
             break;
          case 'B':
-            driverMethod.RequestTypeB(ws, payload, rData)
+            driverMethod.AcceptClassB(ws, payload, rData)
+            break;
          default:
             helpers.outputResponse(ws, { action: requestAction.inputError, error: "Unknown Request" })
       }
+   } else {
+      helpers.outputResponse(ws, { action: requestAction.inputError, error: "Request not availabe. May have been canceled" })
+
    }
 }
+
+//for a driver that arrive the pickup location
+trip.arrivePickUp = (ws, payload) => {
+   let tripID = helpers.getInputValueString(payload, 'trip_id')
+   let rider_id = helpers.getInputValueString(payload, 'rider_id')
+   let rideClass = helpers.getInputValueString(payload, 'class')
+
+   //check if they are not available
+   if (!tripID || tripID.length < 23) {
+      return helpers.outputResponse(ws, { error: requestAction.inputError, error: " A valid trip id is required" })
+   }
+   //check if they are not available
+   if (!rider_id) {
+      return helpers.outputResponse(ws, { error: requestAction.inputError, error: "Rider ID is required" })
+   }
+   //check if they are not available
+   if (['A', 'B', 'C', 'D'].indexOf(rideClass) === -1) {
+      return helpers.outputResponse(ws, { error: requestAction.inputError, error: "Ride class is required" })
+   }
+
+   driverMethod.ArrivePickUp(ws, payload)
+
+}
+
+//for a driver to start trip
+trip.startTrip = (ws, payload) => {
+   let tripID = helpers.getInputValueString(payload, 'trip_id')
+   let rider_id = helpers.getInputValueString(payload, 'rider_id')
+   let rideClass = helpers.getInputValueString(payload, 'class')
+
+   //check if they are not available
+   if (!tripID || tripID.length < 23) {
+      return helpers.outputResponse(ws, { error: requestAction.inputError, error: " A valid trip id is required" })
+   }
+   //check if they are not available
+   if (!rider_id) {
+      return helpers.outputResponse(ws, { error: requestAction.inputError, error: "Rider ID is required" })
+   }
+   //check if they are not available
+   if (['A', 'B', 'C', 'D'].indexOf(rideClass) === -1) {
+      return helpers.outputResponse(ws, { error: requestAction.inputError, error: "Ride class is required" })
+   }
+
+   driverMethod.StartRide(ws, payload)
+
+}
+
+//for canceling a trip
+trip.cancelRequest = (ws, payload) => {
+   let rider_id = helpers.getInputValueString(payload, 'rider_id')
+   let trip_id = helpers.getInputValueString(payload, 'trip_id')
+   let cancelLevel = helpers.getInputValueString(payload, 'cancel_level')
+   let userType = ws._user_data.user_type //get the user type
+
+   if (['1', '2', '3'].indexOf(cancelLevel) === -1) {
+      return helpers.outputResponse(ws, { error: "Unknown Action", action: requestAction.inputError })
+   }
+   //cancel level one is just to cancel a request a driver has not accepted
+   if (cancelLevel === '1') {
+      delete socketUser.online[rider_id] //
+      //if the driver cancels first request level 1, search for another driver
+      if (userType === 'driver') {
+         let getPendingData = socketUser.pendingTrip[payload.rider_id]
+         delete getPendingData.driver //delete the driver data
+         trip.requestDriver(ws, getPendingData)
+      } else {
+         delete socketUser.pendingTrip[rider_id]
+      }
+      // helpers
+   } else if (cancelLevel === '2') {
+      delete socketUser.online[rider_id] //
+      //log the data on the database
+   } else {
+      delete socketUser.online[rider_id] //
+      //log the data on the database
+      ///calculate the price the user has to pay for this level
+   }
+}
+
+
 
 module.exports = trip;

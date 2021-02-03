@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
-const helpers = require('../assets/helpers')
+const helpers = require('../socketServer/assets/helpers')
 
-let zenoTripDBURL = process.env.NODE_ENV === 'dev' ? helpers.zenoTripDB : helpers.zenoTripDB
+let zenoTripDBURL = process.env.NODE_ENV === 'dev' ? helpers.zenoTripDBLocal : helpers.zenoTripDBLIve
 
 let options = {
    useNewUrlParser: true,
