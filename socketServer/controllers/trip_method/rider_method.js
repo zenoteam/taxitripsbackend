@@ -6,6 +6,26 @@ const socketUser = require('../../assets/socketUser')
 
 const riderMethod = {}
 
+//for converting deg to randian
+function deg2rad(deg) {
+   return deg * (Math.PI / 180)
+}
+
+//get the distance
+const getGeometryDistanceKM = (geo1, geo2) => {
+   var R = 6371; // Radius of the earth in km
+   var dLat = deg2rad(geo2.latitude - geo1.latitude);  // deg2rad below
+   var dLon = deg2rad(geo2.longitude - geo1.longitude);
+   var a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(deg2rad(geo1.latitude)) * Math.cos(deg2rad(geo2.latitude)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2)
+      ;
+   var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+   var d = R * c; // Distance in km
+   return !isNaN(d) ? d.toFixed(2) : d;
+}
+
 //function that handles class A ride request
 riderMethod.RequestClassA = async (ws, payload) => {
    // //this block is for test 
@@ -54,8 +74,21 @@ riderMethod.RequestClassA = async (ws, payload) => {
       return helpers.outputResponse(ws, { action: requestAction.driverNotFound })
    }
 
-   let riderData = ws._user_data;
+   let riderData = ws._user_data; //the rider data
+   //the driver data
    let driverData = getDriver[0]
+
+   //add the distance to the payload
+   payload.distance = getGeometryDistanceKM(
+      {
+         latitude: payload.start_lat,
+         longitude: payload.start_lon
+      },
+      {
+         latitude: payload.end_lat,
+         longitude: payload.end_lon
+      })
+
    //hold the request payload and the driver's data till the driver accept the request
    socketUser.pendingTrip[riderData.token] = { ...payload, driver: driverData }
 
@@ -86,6 +119,17 @@ riderMethod.RequestClassB = async (ws, payload) => {
    // helpers.outputResponse(ws, sendDataT, socketUser.online[payload.driver_id])
 
    // return
+
+   //add the distance to the payload
+   payload.distance = getGeometryDistanceKM(
+      {
+         latitude: payload.start_lat,
+         longitude: payload.start_lon
+      },
+      {
+         latitude: payload.end_lat,
+         longitude: payload.end_lon
+      })
 
    //check if there's a trip in trip class B database
    let checkTripB = await RiderModel.TripClassB.find({}).limit(1).catch(e => ({ error: e }))

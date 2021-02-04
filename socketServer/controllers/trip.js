@@ -15,7 +15,6 @@ trip.requestDriver = (ws, payload) => {
    let startLatitude = helpers.getInputValueNumber(payload, 'start_lat')
    let endLongitude = helpers.getInputValueNumber(payload, 'end_lon')
    let endLatitude = helpers.getInputValueNumber(payload, 'end_lat')
-   let distance = helpers.getInputValueNumber(payload, 'distance')
    let name = helpers.getInputValueString(payload, 'name')
    let phone = helpers.getInputValueString(payload, 'phone')
    let startAdrr = helpers.getInputValueString(payload, 'start_address')
@@ -45,9 +44,6 @@ trip.requestDriver = (ws, payload) => {
    }
    if (!phone || phone.length < 10) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Phone is required" })
-   }
-   if (!distance || isNaN(distance)) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Distance is required" })
    }
    //check if the name is empty
    if (!avatar) {
