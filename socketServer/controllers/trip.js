@@ -4,7 +4,6 @@ const tripRidersMethod = require('./trip_method/rider_method')
 const validator = require('validator')
 const socketUser = require('../assets/socketUser')
 const driverMethod = require('./trip_method/driver_method')
-const riderMethod = require('./trip_method/rider_method')
 
 const trip = {}
 
@@ -50,7 +49,7 @@ trip.requestDriver = (ws, payload) => {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Avatar is required" })
    }
 
-   if (['A', 'B', 'C', 'D'].indexOf(rideClass) === -1) {
+   if (["A", "B", "C", "D"].indexOf(rideClass) === -1) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid class" })
    }
 
@@ -58,11 +57,14 @@ trip.requestDriver = (ws, payload) => {
 
    // do the trip request switch
    switch (rideClass) {
-      case 'A':
+      case "A":
          tripRidersMethod.RequestClassA(ws, payload);
          break;
-      case 'B':
+      case "B":
          tripRidersMethod.RequestClassB(ws, payload);
+         break;
+      case "C":
+         tripRidersMethod.RequestClassC(ws, payload);
          break;
       default:
          helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid request" })
@@ -94,7 +96,7 @@ trip.acceptRequest = (ws, payload) => {
    if (!email || !validator.default.isEmail(email)) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid email is required" })
    }
-   if (['A', 'B', 'C', 'D'].indexOf(rideClass) === -1) {
+   if (["A", "B", "C", "D"].indexOf(rideClass) === -1) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid class" })
    }
    if (!riderId) {
@@ -105,14 +107,16 @@ trip.acceptRequest = (ws, payload) => {
    if (socketUser.pendingTrip[riderId] && socketUser.pendingTrip[riderId].class === rideClass) {
       //get the data from pending request
       let rData = socketUser.pendingTrip[riderId]
-
       //switch the request by class
       switch (rideClass) {
-         case 'A':
+         case "A":
             driverMethod.AcceptClassA(ws, payload, rData)
             break;
-         case 'B':
+         case "B":
             driverMethod.AcceptClassB(ws, payload, rData)
+            break;
+         case "C":
+            driverMethod.AcceptClassC(ws, payload, rData)
             break;
          default:
             helpers.outputResponse(ws, { action: requestAction.inputError, error: "Unknown Request" })
@@ -123,14 +127,14 @@ trip.acceptRequest = (ws, payload) => {
    }
 }
 
-//for a driver that arrive the pickup location
+//for a driver that arrives a pickup location
 trip.arrivePickUp = (ws, payload) => {
    let tripID = helpers.getInputValueString(payload, 'trip_id')
    let rider_id = helpers.getInputValueString(payload, 'rider_id')
    let rideClass = helpers.getInputValueString(payload, 'class')
 
    //check if they are not available
-   if (!tripID || tripID.length < 23) {
+   if (!tripID || tripID.length !== 24) {
       return helpers.outputResponse(ws, { error: requestAction.inputError, error: " A valid trip id is required" })
    }
    //check if they are not available
@@ -138,7 +142,7 @@ trip.arrivePickUp = (ws, payload) => {
       return helpers.outputResponse(ws, { error: requestAction.inputError, error: "Rider ID is required" })
    }
    //check if they are not available
-   if (['A', 'B', 'C', 'D'].indexOf(rideClass) === -1) {
+   if (["A", "B", "C", "D"].indexOf(rideClass) === -1) {
       return helpers.outputResponse(ws, { error: requestAction.inputError, error: "Ride class is required" })
    }
 
@@ -149,24 +153,69 @@ trip.arrivePickUp = (ws, payload) => {
 //for a driver to start trip
 trip.startTrip = (ws, payload) => {
    let tripID = helpers.getInputValueString(payload, 'trip_id')
-   let rider_id = helpers.getInputValueString(payload, 'rider_id')
    let rideClass = helpers.getInputValueString(payload, 'class')
+   let riders = helpers.getInputValueArray(payload, 'riders')
 
    //check if they are not available
    if (!tripID || tripID.length < 23) {
-      return helpers.outputResponse(ws, { error: requestAction.inputError, error: " A valid trip id is required" })
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: " A valid trip id is required" })
    }
    //check if they are not available
-   if (!rider_id) {
-      return helpers.outputResponse(ws, { error: requestAction.inputError, error: "Rider ID is required" })
+   if (["A", "B", "C", "D"].indexOf(rideClass) === -1) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Ride class is required" })
    }
-   //check if they are not available
-   if (['A', 'B', 'C', 'D'].indexOf(rideClass) === -1) {
-      return helpers.outputResponse(ws, { error: requestAction.inputError, error: "Ride class is required" })
+   //check rider
+   if (!riders || !(riders instanceof Array)) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Riders not valid" })
    }
 
+   //check if riders has required data
+   for (let i of riders) {
+      if (!/^\d+$/.test(i.waiting_time)) {
+         return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Waiting time not valid" })
+      }
+      if (!i.rider_id) {
+         return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Rider id not valid" })
+      }
+   }
    driverMethod.StartRide(ws, payload)
 
+}
+
+//forr ending a trip
+trip.endTrip = (ws, payload) => {
+   let tripID = helpers.getInputValueString(payload, 'trip_id')
+   let rideClass = helpers.getInputValueString(payload, 'class')
+   let rider_id = helpers.getInputValueString(payload, 'rider_id')
+   let endTime = helpers.getInputValueNumber(payload, 'end_time')
+   let totalDistance = helpers.getInputValueNumber(payload, 'total_distance')
+   let lon = helpers.getInputValueNumber(payload, 'longitude')
+   let lat = helpers.getInputValueNumber(payload, 'latitude')
+
+   //check if they are not available
+   if (!tripID || tripID.length !== 24) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: " A valid trip id is required" })
+   }
+   //check if they are not available
+   if (["A", "B", "C", "D"].indexOf(rideClass) === -1) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Ride class is required" })
+   }
+   //check rider
+   if (!rider_id) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Riders id is required" })
+   }
+   if (!endTime || isNaN(endTime)) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "End time is required" })
+
+   }
+   if (isNaN(totalDistance)) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Total distance is required" })
+   }
+   //if the driver's final position not submitted
+   if (isNaN(lat) || isNaN(lon)) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Driver's final geo code required" })
+   }
+   driverMethod.EndRide(ws, payload)
 }
 
 //for canceling a trip

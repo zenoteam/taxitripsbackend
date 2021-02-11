@@ -36,7 +36,7 @@ helpers.getInputValueObject = (inputObj, field) => {
 
 // for getting input fields array
 helpers.getInputValueArray = (inputObj, field) => {
-   return inputObj instanceof Object && inputObj.hasOwnProperty(field) && typeof inputObj[field] instanceof Array ? inputObj[field] : ''
+   return inputObj instanceof Object && inputObj.hasOwnProperty(field) && inputObj[field] instanceof Array ? inputObj[field] : ''
 }
 
 //for outputing response 

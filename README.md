@@ -1,42 +1,58 @@
 # taxitripsbackend
 
-# Process In Request Mapping
-### For Class A Ride
-1. The requester's start geo code is used in looking for availabe driver in 0-1km distance
-2. When the driver is found, the requester's data is held pending while sending the request to the driver
-3. When the driver accepts the request, the driver's status on the database is updated to indicate,
- ontrip while the trip in log on it's corresponding table.
+# Connection (Connecting to the service)
+Every user is connected to the service through socket. Each connection (device) has a unique generated socket id which is held on the 
+memory. Typically you will see socketUsers.online['user_id']. This represent a particular device that is connected to the socket and it's referenced by the user id (the person using the device). e.g socketUsers is an object with two properties: online and pendingTrip.
+ ```js
+socketUsers={}
+sockUsers.online={} // this holds all the online users connected to the socket
+sockUsers.pendingTrip ={} // this holds all the pending trip request made by the user
+ ```
+ Typically, to fix a user on the online object, each time a new connection is detected and it passed authentication. It will be fixed as
+  ```js
+sockUsers.online['user_id'] = ws.id // using the user's id as a object key to hold the socket id value
+ ```
+ On a fresh connection from socket-client, the server expects the client to submit user id and user type. e.g below
+ ```js
+ let socketIO = io("https://domain.com?user_type=driver&token=user_id")
+ userType = "driver | user"
+ token = "the user's auth token"
+ ```
+ The above will establish a valid connection with the service.
 
+ # Trip Requests
 
- ### For Class B Ride
-1. Firstly, the requester's destination geo code is used in checking any existing ride request to that destination with 0-1km difference
-2. if there's any pending request to that destination, the drivers with the pending request are queried to check if they are close to the requester by 0-1km
-3. if a driver is found close, the request is sent to the driver indicating it as second rider
-4. if there's no driver or no pending request to that destination, a new driver is queried to get any close one to the requester
-5. When the driver is found, the request is sent to the driver.
+ ### Driver
+1. Every driver who connects to the service and turns status to online has a geo coordinates (lon & lat)
+2. When the status successfully turns to online, the service stores the geo coordinates on the driver database
+3. At this point, the driver's geo cordinates form a focal point waiting for a request which will fall within
+0-1km radius from the driver's focal point
 
-# Process In Accepting Request
- 1. The requester's payload is sent to the available driver. The payload 
-   ```js
-  {
-      start_lon: //this is the start longitude
-      start_lat: // this is the end latitude
-      end_lon: // this is the destination longitude
-      end_lat : // this is the destination latitude
-      distance :// this is the distance 
-      name : //name of the requester
-      phone: //phone 
-      start_address : //start address
-      end_address : // end address
-      avatar :// image url
-      class : // ride class A,B,C,D
-      rider_id: // the id of the requester
-   }
+### payload
+Every request to the service requires a payload. The action to be taken by the service is determined by the payload property (key) called action
 
-   ```
-2. the above payload is sent to the driver's app. So the driver can see the request
-3. When the driver accepts the request. The incoming payload are driver's details 
-4. Response is sent to the requester that a driver accept your request. Sending the car name, color, model, number plate,
-   driver's name etc
+```js
+let requestData={
+   action: 'trip/requestDriver', //this is the endpoint of which the request will trigger
+      start_lon: -122.406417, // the client origin (pickup location) longitude
+      start_lat: 37.785994,  // the client origin (pickup location) latitude
+      end_lon: -122.409117,  // the client destination (drop off location) longitude
+      end_lat: 37.785994, // the client destination (drop off location) latitude
+      est_time: 2034, // the estimated time for the trip
+      est_fare: "400-500", // the estimated fare
+      name: "Vikky", // the name of the requester
+      phone: "09035345545", // phone of the requester
+      email:"mail@gmail.com" //the email of the requester
+      start_address: "Plot 3, Tony Oghenejode Close, Lekki Phase 1, Lagos", //origin address in a plain text
+      end_address: "Abramham Adesanga Estate, Ajah, Lagos", // destination address in a plain text
+      avatar: "https://avatar.lagosride.com/my-avatar-url.png", // the photo url of the requester
+      class: "A", // the class of request
+}
+```
 
-
+### For Class A
+1. When a user initializes a request, the service validates all the required data from the payload.
+2. The start longitide and latitude is taken to find a driver who has the requester fallen within 0-1km from the driver's focal points.
+3. If a driver is not found within the area, the service searches for any pending request from class B,C,D that is going same destination (0-1km drop off) and has requester's start coordinates fall within 0-1km of the first requester coordinates on the pending ride.
+ 4. if a class B or C or D is found, the service reply the request recommending to the user a pending trip of the respective class found, if the user would join
+ 5. If the user decides to join the trip, the service map the user to complete the trip in the class of ride.

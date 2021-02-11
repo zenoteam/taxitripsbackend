@@ -1,7 +1,7 @@
 const helpers = require('../../assets/helpers')
 const requestAction = require('../../assets/requestAction')
 const driverModel = require('../../../models/driver')
-const RiderModel = require('../../../models/trip_request')
+const TripModel = require('../../../models/trip_request')
 const socketUser = require('../../assets/socketUser')
 
 const riderMethod = {}
@@ -26,28 +26,14 @@ const getGeometryDistanceKM = (geo1, geo2) => {
    return !isNaN(d) ? d.toFixed(2) : d;
 }
 
+
 //function that handles class A ride request
 riderMethod.RequestClassA = async (ws, payload) => {
-   // //this block is for test 
-   // //send the request to the driver
-   // let riderDataT = ws._user_data;
-   // let sendDataT = {
-   //    ...payload,
-   //    rider_id: riderDataT.token,
-   //    action: requestAction.newTripRequest,
-   // }
-   // socketUser.pendingTrip[riderDataT.token] = { ...payload }
-
-   // helpers.outputResponse(ws, sendDataT, socketUser.online[payload.driver_id])
-
-   // //the block stop here
-   // return
-
-   //find a driver withing the location
+   //find a free driver withing the location
    let getDriver = await driverModel.aggregate([
       {
          $geoNear: {
-            "near": { "type": "Point", "coordinates": [parseFloat(payload.start_lon), parseFloat(payload.start_lat)] },
+            "near": { "type": "Point", "coordinates": [payload.start_lon, payload.start_lat] },
             "distanceField": "location.distance",
             "minDistance": 0,
             "spherical": true,
@@ -57,69 +43,82 @@ riderMethod.RequestClassA = async (ws, payload) => {
       },
       { $match: { user_approve: true, on_trip: false, online: true } },
       {
-         $project: {
-            user_id: 1,
-            location: 1,
-            car_plate_number: 1,
-            car_color: 1,
-            car_model: 1,
-         }
+         $project: { user_id: 1 }
       },
       { $sort: { "location.distance": 1 } },
       { $limit: 1 },
    ])
+   //if there's a driver
+   if (getDriver && getDriver.length > 0) {
+      let riderData = ws._user_data; //the rider data
+      //the driver data
+      let driverData = getDriver[0]
+      //add the distance to the payload
+      payload.distance = getGeometryDistanceKM(
+         {
+            latitude: payload.start_lat,
+            longitude: payload.start_lon
+         },
+         {
+            latitude: payload.end_lat,
+            longitude: payload.end_lon
+         })
+      //hold the request payload and the driver's data till the driver accept the request
+      socketUser.pendingTrip[riderData.token] = { ...payload, driver: driverData.user_id, request_time: new Date() }
 
-   // check if there  no driver
-   if (!getDriver || getDriver.length === 0) {
-      return helpers.outputResponse(ws, { action: requestAction.driverNotFound })
+      //send the request to the driver
+      let sendData = {
+         ...payload,
+         rider_id: riderData.token,
+         action: requestAction.newTripRequest,
+      }
+
+      //if driver online
+      if (socketUser.online[driverData.user_id]) {
+         helpers.outputResponse(ws, sendData, socketUser.online[driverData.user_id])
+      } else {
+         //if driver's device is not reachable (TODO)
+      }
+   } else {
+      //find any pending request if any
+      let getPendingTrip = await TripModel.TripRequests.aggregate([
+         {
+            $match: {
+               'location.origin.coordinates': {
+                  $geoWithin: { $centerSphere: [[payload.start_lon, payload.start_lat], 1 / 6371] }
+               },
+               'location.destination.coordinates': {
+                  $geoWithin: { $centerSphere: [[payload.end_lon, payload.end_lat], 1 / 6371] }
+               },
+               ride_status: 'waiting', ride_class: { $in: ['B', 'C'] }
+            }
+         },
+         { $sort: { ride_class: 1 } },
+         { $limit: 1 }
+      ])
+      //check if there's no pending ride going to user's location
+      if (!getPendingTrip || getPendingTrip.length === 0) {
+         return helpers.outputResponse(ws, { action: requestAction.driverNotFound })
+      }
+      //if ride exist, recommend the ride to the user
+      let sendData = {
+         action: requestAction.rideRecommendation,
+         class: getPendingTrip[0].ride_class,
+         trip_id: getPendingTrip[0]._id,
+      }
+      //if driver is online
+      let driverId = getPendingTrip[0].driver_id
+      if (socketUser.online[driverId]) {
+         helpers.outputResponse(ws, sendData, driverId)
+      } else {
+         return helpers.outputResponse(ws, { action: requestAction.driverNotFound })
+      }
    }
-
-   let riderData = ws._user_data; //the rider data
-   //the driver data
-   let driverData = getDriver[0]
-
-   //add the distance to the payload
-   payload.distance = getGeometryDistanceKM(
-      {
-         latitude: payload.start_lat,
-         longitude: payload.start_lon
-      },
-      {
-         latitude: payload.end_lat,
-         longitude: payload.end_lon
-      })
-
-   //hold the request payload and the driver's data till the driver accept the request
-   socketUser.pendingTrip[riderData.token] = { ...payload, driver: driverData }
-
-   //send the request to the driver
-   let sendData = {
-      ...payload,
-      rider_id: riderData.token,
-      action: requestAction.newTripRequest,
-   }
-   helpers.outputResponse(ws, sendData, socketUser.online[driverData.user_id])
 }
 
-//Private function that handles class B request
+
+// function that handles class B request
 riderMethod.RequestClassB = async (ws, payload) => {
-   // //this block below for test
-   // let riderDataT = ws._user_data;
-   // //add the rider position
-   // payload.rider = 1
-   // //hold the request payload and the driver's data till the driver accept the request
-   // socketUser.pendingTrip[riderDataT.token] = { ...payload, driver: [] }
-
-   // //send the request to the driver
-   // let sendDataT = {
-   //    ...payload,
-   //    rider_id: riderDataT.token,
-   //    action: requestAction.newTripRequest
-   // }
-   // helpers.outputResponse(ws, sendDataT, socketUser.online[payload.driver_id])
-
-   // return
-
    //add the distance to the payload
    payload.distance = getGeometryDistanceKM(
       {
@@ -131,14 +130,67 @@ riderMethod.RequestClassB = async (ws, payload) => {
          longitude: payload.end_lon
       })
 
-   //check if there's a trip in trip class B database
-   let checkTripB = await RiderModel.TripClassB.find({}).limit(1).catch(e => ({ error: e }))
-   if (checkTripB && !checkTripB.error) {
-      //First check if there's a pending request on the class B that is going same way
-      let getPendingTrip = await RiderModel.TripClassB.aggregate([
+   //find any pending request of class B or C
+   let getPendingTrip = await TripModel.TripRequests.aggregate([
+      {
+         $match: {
+            'location.origin.coordinates': {
+               $geoWithin: { $centerSphere: [[payload.start_lon, payload.start_lat], 1 / 6371] }
+            },
+            'location.destination.coordinates': {
+               $geoWithin: { $centerSphere: [[payload.end_lon, payload.end_lat], 1 / 6371] }
+            },
+            ride_status: 'waiting', ride_class: { $in: ['B', 'C'] }
+         }
+      },
+      { $sort: { ride_class: 1 } },
+      { $limit: 1 }
+   ])
+
+   let riderData = ws._user_data //get the requestor data
+
+   //if there's a pending request
+   if (getPendingTrip && getPendingTrip.length > 0) {
+      let td = getPendingTrip[0]
+      //check the class of the trip
+      if (td.ride_class === 'B') {
+         //add the rider position
+         payload.rider = 2
+         //hold the request payload and the driver's data till the driver accept the request
+         socketUser.pendingTrip[riderData.token] = {
+            ...payload,
+            driver: { user_id: td.driver_id },
+            trip_id: td._id,
+            request_time: new Date()
+         }
+         //send the request to the driver
+         let sendData = {
+            ...payload,
+            rider_id: riderData.token,
+            action: requestAction.newTripRequest,
+         }
+         //check if driver online
+         if (socketUser.online[td.driver_id]) {
+            helpers.outputResponse(ws, sendData, socketUser.online[td.driver_id])
+         } else {
+            //driver phone not reachable, do something (TODO)
+         }
+      } else {
+         //send the request to the driver
+         let sendData = {
+            trip_id: td._id,
+            class: td.ride_class,
+            action: requestAction.rideRecommendation,
+         }
+         helpers.outputResponse(ws, sendData)
+      }
+   } else {
+      // if no pending class B or C that matches the request, book new driver
+      //find a free driver withing the location
+      let getDriver = await driverModel.aggregate([
          {
             $geoNear: {
-               "near": { "type": "Point", "coordinates": [parseFloat(payload.end_lon), parseFloat(payload.end_lat)] },
+               "near": { "type": "Point", "coordinates": [payload.start_lon, payload.start_lat] },
                "distanceField": "location.distance",
                "minDistance": 0,
                "spherical": true,
@@ -146,122 +198,180 @@ riderMethod.RequestClassB = async (ws, payload) => {
                "distanceMultiplier": 0.001
             }
          },
-         { $match: { ride_status: 'waiting' } },
-         { $project: { driver_id: 1, _id: 1 } },
-         { $sort: { "destination.distance": 1 } },
-         { $limit: 20 }
+         { $match: { user_approve: true, on_trip: false, online: true } },
+         {
+            $project: { user_id: 1, }
+         },
+         { $sort: { "location.distance": 1 } },
+         { $limit: 1 },
       ])
 
-      //check if there's any result
-      if (getPendingTrip instanceof Array && getPendingTrip.length > 0) {
-         //get all the drivers' id
-         let driversIDs = []
-         for (let i of getPendingTrip) {
-            driversIDs.push(i.driver_id) //push the driver's id to the array
-         }
-         //check if there's a driver close to the person (second rider)
-         let getDriver = await driverModel.aggregate([
+      //if there's a driver
+      if (getDriver && getDriver.length > 0) {
+         let riderData = ws._user_data; //the rider data
+         //the driver data
+         let driverData = getDriver[0]
+         //add the distance to the payload
+         payload.distance = getGeometryDistanceKM(
             {
-               $geoNear: {
-                  "near": { "type": "Point", "coordinates": [payload.start_lon, payload.start_lat] },
-                  "distanceField": "location.distance",
-                  "minDistance": 0,
-                  "spherical": true,
-                  "maxDistance": 1000,
-                  "distanceMultiplier": 0.001
-               }
+               latitude: payload.start_lat,
+               longitude: payload.start_lon
             },
-            { $match: { on_trip: false, online: true, user_id: { $in: driversIDs } } },
             {
-               $project: {
-                  user_id: 1,
-                  location: 1,
-                  car_plate_number: 1,
-                  car_color: 1,
-                  car_model: 1,
-                  riders: 1,
-               }
-            },
-            { $sort: { "location.distance": 1 } },
-            { $limit: 1 },
-         ])
+               latitude: payload.end_lat,
+               longitude: payload.end_lon
+            })
+         //add the rider position
+         payload.rider = 1
+         //hold the request payload and the driver's data till the driver accept the request
+         socketUser.pendingTrip[riderData.token] = { ...payload, driver: driverData.user_id, request_time: new Date() }
 
-         //if there's a driver
-         if (getDriver instanceof Array && getDriver.length > 0) {
-            let riderData = ws._user_data;
-            let driverData = getDriver[0]
-            //add the rider position
-            payload.rider = 2
-            //get the first rider record id
-            payload.record_id = getPendingTrip[getPendingTrip.findIndex(ed => ed.driver_id === driverData.user_id)]._id
-            //hold the request payload and the driver's data till the driver accept the request
-            socketUser.pendingTrip[riderData.token] = { ...payload, driver: driverData }
-            //send the request to the driver
-            let sendData = {
-               ...payload,
-               rider_id: riderData.token,
-               action: requestAction.newTripRequest,
-            }
-            //check if the driver is online and send
-            if (socketUser.online[driverData.user_id]) {
-               helpers.outputResponse(ws, sendData, socketUser.online[driverData.user_id])
-            } else {
-               helpers.outputResponse(ws, { action: requestAction.driverNotFound, })
-            }
-            //stop the code if there's a driver found
-            return
+         //send the request to the driver
+         let sendData = {
+            ...payload,
+            rider_id: riderData.token,
+            action: requestAction.newTripRequest,
          }
+
+         //if driver online
+         if (socketUser.online[driverData.user_id]) {
+            helpers.outputResponse(ws, sendData, socketUser.online[driverData.user_id])
+         } else {
+            //if driver's device is not reachable (TODO)
+         }
+      } else {
+         helpers.outputResponse(ws, { action: requestAction.driverNotFound })
       }
-
    }
+}
 
-
-   //if there's no pending/driver found. Search for a driver freshly close to the rider
-   let getDriver = await driverModel.aggregate([
+// function that handles class B request
+riderMethod.RequestClassC = async (ws, payload) => {
+   //add the distance to the payload
+   payload.distance = getGeometryDistanceKM(
       {
-         $geoNear: {
-            "near": { "type": "Point", "coordinates": [parseFloat(payload.start_lon), parseFloat(payload.start_lat)] },
-            "distanceField": "location.distance",
-            "minDistance": 0,
-            "spherical": true,
-            "maxDistance": 1000,
-            "distanceMultiplier": 0.001
+         latitude: payload.start_lat,
+         longitude: payload.start_lon
+      },
+      {
+         latitude: payload.end_lat,
+         longitude: payload.end_lon
+      })
+
+   //find any pending request of class B or C
+   let getPendingTrip = await TripModel.TripRequests.aggregate([
+      {
+         $match: {
+            'location.origin.coordinates': {
+               $geoWithin: { $centerSphere: [[payload.start_lon, payload.start_lat], 1 / 6371] }
+            },
+            'location.destination.coordinates': {
+               $geoWithin: { $centerSphere: [[payload.end_lon, payload.end_lat], 1 / 6371] }
+            },
+            ride_status: 'waiting', ride_class: { $in: ['B', 'C'] }
          }
       },
-      { $match: { user_approve: true, on_trip: false, online: true } },
-      {
-         $project: {
-            user_id: 1,
-            location: 1,
-            car_plate_number: 1,
-            car_color: 1,
-            car_model: 1,
-            riders: 1,
-         }
-      },
-      { $sort: { "location.distance": 1 } },
-      { $limit: 1 },
+      { $sort: { ride_class: -1 } },
+      { $limit: 1 }
    ])
 
-   //check if there error or no driver
-   if (!getDriver || getDriver.length === 0) {
-      return helpers.outputResponse(ws, { action: requestAction.driverNotFound })
-   }
+   let riderData = ws._user_data //get the requestor data
 
-   let riderData = ws._user_data;
-   let driverData = getDriver[0]
-   //add the rider position
-   payload.rider = 1
-   //hold the request payload and the driver's data till the driver accept the request
-   socketUser.pendingTrip[riderData.token] = { ...payload, driver: driverData }
+   //if there's a pending request
+   if (getPendingTrip && getPendingTrip.length > 0) {
+      let td = getPendingTrip[0]
+      //check the class of the trip
+      if (td.ride_class === 'C') {
+         //add the rider postion
+         payload.rider = td.riders.length + 1
+         //hold the request payload and the driver's data till the driver accept the request
+         socketUser.pendingTrip[riderData.token] = {
+            ...payload,
+            driver: { user_id: td.driver_id },
+            trip_id: td._id,
+            request_time: new Date()
+         }
+         //send the request to the driver
+         let sendData = {
+            ...payload,
+            rider_id: riderData.token,
+            rider: td.riders.length === 2 ? 3 : 2,
+            action: requestAction.newTripRequest,
+         }
+         //check if driver online
+         if (socketUser.online[td.driver_id]) {
+            helpers.outputResponse(ws, sendData, socketUser.online[td.driver_id])
+         } else {
+            //driver phone not reachable, do something (TODO)
+         }
+      } else {
+         //send the request to the driver
+         let sendData = {
+            trip_id: td._id,
+            class: td.ride_class,
+            action: requestAction.rideRecommendation,
+         }
+         helpers.outputResponse(ws, sendData)
+      }
+   } else {
+      // if no pending class B or C that matches the request, book new driver
+      //find a free driver withing the location
+      let getDriver = await driverModel.aggregate([
+         {
+            $geoNear: {
+               "near": { "type": "Point", "coordinates": [payload.start_lon, payload.start_lat] },
+               "distanceField": "location.distance",
+               "minDistance": 0,
+               "spherical": true,
+               "maxDistance": 1000,
+               "distanceMultiplier": 0.001
+            }
+         },
+         { $match: { user_approve: true, on_trip: false, online: true } },
+         {
+            $project: { user_id: 1 }
+         },
+         { $sort: { "location.distance": 1 } },
+         { $limit: 1 },
+      ])
 
-   //send the request to the driver
-   let sendData = {
-      ...payload,
-      rider_id: riderData.token,
-      action: requestAction.newTripRequest
+      //if there's a driver
+      if (getDriver && getDriver.length > 0) {
+         let riderData = ws._user_data; //the rider data
+         //the driver data
+         let driverData = getDriver[0]
+         //add the distance to the payload
+         payload.distance = getGeometryDistanceKM(
+            {
+               latitude: payload.start_lat,
+               longitude: payload.start_lon
+            },
+            {
+               latitude: payload.end_lat,
+               longitude: payload.end_lon
+            })
+         //add the rider position
+         payload.rider = 1
+         //hold the request payload and the driver's data till the driver accept the request
+         socketUser.pendingTrip[riderData.token] = { ...payload, driver: driverData.user_id, request_time: new Date() }
+
+         //send the request to the driver
+         let sendData = {
+            ...payload,
+            rider_id: riderData.token,
+            action: requestAction.newTripRequest,
+         }
+
+         //if driver online
+         if (socketUser.online[driverData.user_id]) {
+            helpers.outputResponse(ws, sendData, socketUser.online[driverData.user_id])
+         } else {
+            //if driver's device is not reachable (TODO)
+         }
+      } else {
+         helpers.outputResponse(ws, { action: requestAction.driverNotFound })
+      }
    }
-   helpers.outputResponse(ws, sendData, socketUser.online[driverData.user_id])
 }
 
 module.exports = riderMethod;

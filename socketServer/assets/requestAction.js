@@ -9,5 +9,8 @@ requestAction.driverAcceptRequest = "driver_accept_request"
 requestAction.driverArrivePickUp = "driver_arrive_pickup_location"
 requestAction.driverStartTripSuccess = "driver_start_trip_success"
 requestAction.driverStatusSet = "driver_status_set_success"
+requestAction.rideRecommendation = "recommending_another_ride_class"
+requestAction.driverEndRide = "driver_end_ride"
+requestAction.driverEndRideSuccessfully = "ride_ended_successfully"
 
 module.exports = requestAction;
