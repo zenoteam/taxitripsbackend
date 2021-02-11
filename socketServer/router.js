@@ -28,7 +28,7 @@ module.exports = (ws, payload) => {
       // require the file requested
       controller = require('./controllers/' + sAction[0])
    } catch (e) {
-      console.log(e)
+      // console.log(e)
       // if the file does not exist
       return helpers.outputResponse(ws, { error: "Requested resource not found", action: requestAction.inputError })
    }
@@ -38,7 +38,7 @@ module.exports = (ws, payload) => {
       try {
          controller[sAction[1]](ws, payload) //pass in the variable needed by the function
       } catch (e) {
-         console.log(e)
+         // console.log(e)
          return helpers.outputResponse(ws, { error: "Requested resource is unavailable", action: requestAction.inputError })
       }
    } else {
