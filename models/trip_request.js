@@ -1,77 +1,6 @@
 const dbConnector = require('./dbconnector');
 const Schema = dbConnector.mongoose.Schema;
 
-// const TripClassA = new Schema({
-//    id: Schema.Types.ObjectId,
-//    driver_id: {
-//       type: String,
-//       required: true,
-//    },
-//    riders: {
-//       type: Array,
-//       default: [],
-//       required: true
-//    },
-//    ride_status: {
-//       type: String,
-//       enum: ['waiting', 'on_ride', 'completed'],
-//       required: true,
-//    },
-//    created: {
-//       type: String,
-//       default: (new Date().toString()).substr(0, 10)
-//    }
-// }, {
-//    timestamps: true,
-//    minimize: false,
-//    id: true,
-// });
-
-
-// const TripClassB = new Schema({
-//    id: Schema.Types.ObjectId,
-//    driver_id: {
-//       type: String,
-//       required: true,
-//    },
-//    riders: {
-//       type: Array,
-//       default: [],
-//       required: true
-//    },
-//    ride_status: {
-//       type: String,
-//       enum: ['waiting', 'on_ride', 'completed'],
-//       required: true,
-//    },
-//    ride_class: {
-//       type: String,
-//       enum: ['A', 'B', 'C', 'D'],
-//       required: true
-//    },
-//    destination: {
-//       type: {
-//          type: String,
-//          enum: ['Point'],
-//          required: true
-//       },
-//       coordinates: {
-//          type: [Number],
-//          required: true
-//       },
-//    },
-//    created: {
-//       type: String,
-//       default: (new Date().toString()).substr(0, 10)
-//    }
-// }, {
-//    timestamps: true,
-//    minimize: false,
-//    id: true,
-// });
-
-// TripClassB.index({ destination: '2dsphere' });
-
 
 const TripRequests = new Schema({
    id: Schema.Types.ObjectId,
@@ -148,7 +77,5 @@ TripRequests.index({ 'location.origin': '2dsphere', 'location.destination': '2ds
 
 
 module.exports = {
-   // TripClassA: dbConnector.zenoTripDB.model('trip_a_requests', TripClassA),
-   // TripClassB: dbConnector.zenoTripDB.model('trip_b_requests', TripClassB),
    TripRequests: dbConnector.zenoTripDB.model('trip_requests', TripRequests)
 }

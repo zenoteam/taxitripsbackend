@@ -60,9 +60,9 @@ driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
    //get the driver's unique id
    let driverId = ws._user_data.token
    // update the driver's trip data
-   let updateData = await driverModel.findOneAndUpdate({ user_id: driverId }, { on_trip: true }, { new: true }).catch(e => ({ error: e }))
+   let updateDriver = await driverModel.findOneAndUpdate({ user_id: driverId }, { on_trip: true }, { new: true }).catch(e => ({ error: e }))
    //if there's an error 
-   if (!updateData || updateData.error) {
+   if (!updateDriver || updateDriver.error) {
       return helpers.outputResponse(ws, { action: requestAction.serverError })
    }
 
@@ -96,9 +96,9 @@ driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
    if (socketUser.online[payload.rider_id]) {
       let sendData1 = {
          ...payload,
-         car_plate_number: pendingData.driver.car_plate_number,
-         car_color: pendingData.driver.car_color,
-         car_model: pendingData.driver.car_model,
+         car_plate_number: updateDriver.car_plate_number,
+         car_color: updateDriver.car_color,
+         car_model: updateDriver.car_model,
          trip_id: saveTrip._id,
          action: requestAction.driverAcceptRequest
       }
