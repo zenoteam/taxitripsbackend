@@ -2,7 +2,8 @@ const driver = {}
 const validator = require('validator');
 const helpers = require('../assets/helpers');
 const requestAction = require('../assets/requestAction');
-const driverModel = require('../../models/driver')
+const driverModel = require('../../models/driver');
+const socketUser = require('../assets/socketUser');
 
 
 driver.setOnlineStatus = async (ws, payload) => {
@@ -69,6 +70,9 @@ driver.setOnlineStatusTem = async (ws, payload) => {
    //check if not updated
    if (!updateStatus || updateStatus.error) {
       return helpers.outputResponse(ws, { action: requestAction.serverError })
+   }
+   if (!socketUser.online[driverId]) {
+      socketUser.online[driverId] = ws.id
    }
    helpers.outputResponse(ws, { action: requestAction.driverStatusSet, status })
 }
