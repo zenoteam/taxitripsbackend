@@ -56,12 +56,7 @@ const TripRequests = new Schema({
    minimize: false,
    id: true,
 });
-
 TripRequests.index({ 'location.origin': '2dsphere', 'location.destination': '2dsphere' });
-
-
-
-
 // the riders field will be array of object. e.g below
 // {
 //    rider_id: "the-user-id-requesting-the-ride",
@@ -74,8 +69,67 @@ TripRequests.index({ 'location.origin': '2dsphere', 'location.destination': '2ds
 //    price: "amount-paid-for-the-trip",
 // }
 
+//for rating
+const TripRatings = new Schema({
+   id: Schema.Types.ObjectId,
+   user_id: {
+      type: String,
+      required: true
+   },
+   trip_id: {
+      type: Schema.Types.ObjectId,
+      ref: 'trip_request',
+      required: true
+   },
+   rater_id: {
+      type: String,
+      required: true,
+   },
+   rating: {
+      type: Number,
+      default: 0,
+      required: true
+   }
+}, {
+   timestamps: true,
+   minimize: false,
+   id: true
+})
+
+
+//for rating
+const DriverWorkHours = new Schema({
+   id: Schema.Types.ObjectId,
+   user_id: {
+      type: String,
+      required: true
+   },
+   trip_id: {
+      type: Schema.Types.ObjectId,
+      ref: 'trip_request',
+      required: true,
+      unique: true
+   },
+   km: {
+      type: Number,
+      default: 0,
+      required: true,
+   },
+   time: {
+      type: Number,
+      default: 0,
+      required: true
+   }
+}, {
+   timestamps: true,
+   minimize: false,
+   id: true
+})
+
 
 
 module.exports = {
-   TripRequests: dbConnector.zenoTripDB.model('trip_requests', TripRequests)
+   TripRequests: dbConnector.zenoTripDB.model('trip_requests', TripRequests),
+   TripRatings: dbConnector.zenoTripDB.model('trip_ratings', TripRatings),
+   DriverWorkHours: dbConnector.zenoTripDB.model('driver_worker_hours', DriverWorkHours),
 }

@@ -12,5 +12,7 @@ requestAction.driverStatusSet = "driver_status_set_success"
 requestAction.rideRecommendation = "recommending_another_ride_class"
 requestAction.driverEndRide = "driver_end_ride"
 requestAction.driverEndRideSuccessfully = "ride_ended_successfully"
+requestAction.tripCancelSuccessfully = "trip_cancel_successfully"
+requestAction.ratingSubmittedSuccessfully = "user_rating_submitted_successfully"
 
 module.exports = requestAction;

@@ -51,7 +51,8 @@ driver.setOnlineStatusTem = async (ws, payload) => {
    let updateStatus;
    if (status === 'off') {
       //update the status
-      updateStatus = await driverModel.findOneAndUpdate({ user_id: driverId }, { online: false, }, { upsert: true }).catch(e => ({ error: e }))
+      updateStatus = await driverModel.findOneAndUpdate({ user_id: driverId },
+         { online: false, }, { upsert: true }).catch(e => ({ error: e }))
    } else {
       updateStatus = await driverModel.findOneAndUpdate({ user_id: driverId },
          {
@@ -65,7 +66,7 @@ driver.setOnlineStatusTem = async (ws, payload) => {
          }, { upsert: true, new: true }).catch(e => ({ error: e }))
 
    }
-   //check if not updated 
+   //check if not updated
    if (!updateStatus || updateStatus.error) {
       return helpers.outputResponse(ws, { action: requestAction.serverError })
    }

@@ -78,6 +78,7 @@ riderMethod.RequestClassA = async (ws, payload) => {
          helpers.outputResponse(ws, sendData, socketUser.online[driverData.user_id])
       } else {
          //if driver's device is not reachable (TODO)
+         // console.log(driverData.user_id)
       }
    } else {
       //find any pending request if any
@@ -205,7 +206,6 @@ riderMethod.RequestClassB = async (ws, payload) => {
          { $sort: { "location.distance": 1 } },
          { $limit: 1 },
       ])
-
       //if there's a driver
       if (getDriver && getDriver.length > 0) {
          let riderData = ws._user_data; //the rider data
@@ -232,7 +232,6 @@ riderMethod.RequestClassB = async (ws, payload) => {
             rider_id: riderData.token,
             action: requestAction.newTripRequest,
          }
-
          //if driver online
          if (socketUser.online[driverData.user_id]) {
             helpers.outputResponse(ws, sendData, socketUser.online[driverData.user_id])

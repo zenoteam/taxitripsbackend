@@ -1,4 +1,5 @@
 const io = require('socket.io')
+const request = require('request')
 const socketUsers = require('./assets/socketUser')
 const router = require('./router')
 const socket = {}
@@ -17,7 +18,6 @@ socket.createServer = (httpServer) => {
       let userToken = query.token ? query.token : null
       let userType = query.user_type ? query.user_type : null
 
-      //if there's no token or the token is invalid, terminate the connection
       if (!userToken || userToken.length !== 30) {
          return next(new Error('Unauthorized'));
       }
@@ -25,10 +25,39 @@ socket.createServer = (httpServer) => {
       if (['driver', 'user'].indexOf(userType) === -1) {
          return next(new Error('Unauthorized'));
       }
-      //add the user data to the obj
       ws._user_data = {
          token: userToken,
          user_type: userType
+      }
+      next()
+      return
+
+      //if there's no token or the token is invalid, terminate the connection
+      if (!userToken || userToken.indexOf('Bearer') === -1) {
+         return next(new Error('Unauthorized'));
+      }
+      //if the usertype is not valid
+      if (['driver', 'user'].indexOf(userType) === -1) {
+         return next(new Error('Unauthorized'));
+      }
+      //check the token with the auth service
+      let checkToken = await socket.verifyBearerToken(userToken)
+
+      //if the token is invalid
+      try {
+         //parse the response if not object
+         checkToken = typeof checkToken === 'object' ? checkToken : JSON.parse(checkToken)
+         if (!checkToken || !/^\d+$/.test(checkToken.id)) {
+            return next(new Error('Unauthorized'));
+         }
+         //add the user data to the obj
+         ws._user_data = {
+            token: `A${checkToken.id}`,
+            user_type: userType
+         }
+
+      } catch (e) {
+         return next(new Error('Unauthorized'));
       }
 
       //if after the auth validation and the connection is valid
@@ -74,6 +103,17 @@ socket.createServer = (httpServer) => {
 socket.takeASleep = (time) => {
    console.log('sleeping for ' + time + ' seconds')
    return new Promise((resolve, reject) => setTimeout(resolve, time))
+}
+//for verifying user token
+socket.verifyBearerToken = (token) => {
+   return new Promise((resolve, reject) => {
+      request({
+         uri: 'http://212.71.246.199:8000/api/verify/',
+         method: 'GET', headers: { "Authorization": token }
+      }, (err, res, body) => {
+         resolve(err ? { error: err } : body)
+      })
+   })
 }
 
 module.exports = socket;

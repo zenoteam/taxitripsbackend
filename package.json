@@ -13,6 +13,7 @@
       "mongodb": "^3.6.4",
       "mongoose": "^5.11.13",
       "qs": "^6.9.6",
+      "request": "^2.88.2",
       "socket.io": "^2.1.1",
       "validator": "^13.5.2"
    }

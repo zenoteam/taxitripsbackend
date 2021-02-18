@@ -9,6 +9,7 @@ const driverMethod = {}
 const getRiderData = (payload, pendingData) => {
    return {
       rider_id: payload.rider_id,
+      rider: pendingData.rider,
       name: pendingData.name,
       email: pendingData.email,
       phone: pendingData.phone,
@@ -71,7 +72,7 @@ driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
 
    //Saving the trip in the trip table
    let riderData = getRiderData(payload, pendingData)
-
+   riderData.rider = 1 //add the rider position
    //save the trip data
    let saveTrip = await tripModel.TripRequests.create({
       driver_id: driverId,
@@ -100,6 +101,7 @@ driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
          car_color: updateDriver.car_color,
          car_model: updateDriver.car_model,
          trip_id: saveTrip._id,
+         driver_id: driverId,
          action: requestAction.driverAcceptRequest
       }
       helpers.outputResponse(ws, sendData1, socketUser.online[payload.rider_id])
@@ -147,6 +149,7 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
          class: "B",
          action: requestAction.driverAcceptRequest,
          rider: 1,
+         driver_id: driverId,
          trip_id: saveTrip._id
       }
 
@@ -186,6 +189,7 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
          class: "B",
          action: requestAction.driverAcceptRequest,
          rider: 2,
+         driver_id: driverId,
          riders: updateTrip.riders,
          trip_id: updateTrip._id
       }
@@ -243,6 +247,7 @@ driverMethod.AcceptClassC = async (ws, payload, pendingData) => {
          class: "C",
          action: requestAction.driverAcceptRequest,
          rider: 1,
+         driver_id: driverId,
          trip_id: saveTrip._id
       }
 
@@ -284,7 +289,8 @@ driverMethod.AcceptClassC = async (ws, payload, pendingData) => {
          action: requestAction.driverAcceptRequest,
          rider: payload.rider,
          riders: updateTrip.riders,
-         trip_id: updateTrip._id
+         trip_id: updateTrip._id,
+         driver_id: driverId,
       }
 
       //delete the request from pending requests
@@ -470,10 +476,12 @@ driverMethod.EndRide = async (ws, payload) => {
    }
    //sum the total fare
    totalFare = Math.ceil(getFare + getWaitingFare + baseFare)
-
+   //get people that hv been dropped off
+   let dropOffRiders = getUser.riders.filter(d => d.status === 'completed')
    //clear the driver from ontrip
    let updateDriver = await driverModel.findOneAndUpdate({ user_id: ws._user_data.token },
-      { on_trip: false, 'location.coordinates': [payload.longitude, payload.latitude] }, { new: true }).catch(e => ({ error: e }))
+      { on_trip: false, 'location.coordinates': [payload.longitude, payload.latitude] },
+      { new: true }).catch(e => ({ error: e }))
    //check if it's not updated
    if (!updateDriver || updateDriver.error) {
       helpers.outputResponse(ws, { action: requestAction.inputError, error: "Your status could not be set to available. Please contact support" })
@@ -501,7 +509,7 @@ driverMethod.EndRide = async (ws, payload) => {
                'riders.$.end_time': totalTimeCovered,
                'riders.$.total_distance': totalDstCovered,
                'riders.$.fare': totalFare
-            }, ride_status: payload.rider === 2 ? 'completed' : 'on_ride'
+            }, ride_status: dropOffRiders.length === 2 ? 'completed' : 'on_ride'
          }, { new: true }).catch(e => ({ error: e }))
 
    } else if (rideClass === 'C') {
@@ -513,7 +521,7 @@ driverMethod.EndRide = async (ws, payload) => {
                'riders.$.end_time': totalTimeCovered,
                'riders.$.total_distance': totalDstCovered,
                'riders.$.fare': totalFare
-            }, ride_status: payload.rider === 3 ? 'completed' : 'on_ride'
+            }, ride_status: dropOffRiders.length === 3 ? 'completed' : 'on_ride'
          }, { new: true }).catch(e => ({ error: e }))
    } else {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Unknown Class" })
@@ -524,7 +532,17 @@ driverMethod.EndRide = async (ws, payload) => {
       // return
       //do somthing here
    }
-
+   //add the distance and the tm the driver has covered
+   if ((rideClass === "B" && dropOffRiders.length === 1) ||
+      (rideClass === "C" && dropOffRiders.length === 2) ||
+      (rideClass === "D" && dropOffRiders.length === 3)) {
+      let addDriverKM = await tripModel.DriverWorkHours.create({
+         user_id: ws._user_data.token,
+         trip_id: payload.trip_id,
+         km: payload.total_distance,
+         time: payload.end_time
+      })
+   }
    //send the respond to the user
    let sendData = {
       action: requestAction.driverEndRide,
@@ -541,7 +559,6 @@ driverMethod.EndRide = async (ws, payload) => {
    //send the response to the driver
    sendData.action = requestAction.driverEndRideSuccessfully
    helpers.outputResponse(ws, sendData)
-
 }
 
 

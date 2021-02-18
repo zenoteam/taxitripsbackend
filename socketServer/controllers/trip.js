@@ -1,9 +1,10 @@
+const validator = require('validator')
 const helpers = require('../assets/helpers')
 const requestAction = require('../assets/requestAction')
 const tripRidersMethod = require('./trip_method/rider_method')
-const validator = require('validator')
 const socketUser = require('../assets/socketUser')
 const driverMethod = require('./trip_method/driver_method')
+const tripModel = require('../../models/trip_request')
 
 const trip = {}
 
@@ -19,6 +20,8 @@ trip.requestDriver = (ws, payload) => {
    let startAdrr = helpers.getInputValueString(payload, 'start_address')
    let endAddr = helpers.getInputValueString(payload, 'end_address')
    let avatar = helpers.getInputValueString(payload, 'avatar')
+   let est_fare = helpers.getInputValueString(payload, 'est_fare')
+   let est_time = helpers.getInputValueNumber(payload, 'est_time')
    let rideClass = helpers.getInputValueString(payload, 'class')
 
    //check and validate the input
@@ -48,7 +51,16 @@ trip.requestDriver = (ws, payload) => {
    if (!avatar) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Avatar is required" })
    }
+   //check if there's no estimated time
+   if (isNaN(est_time)) {
+      return helpers.outputResponse(ws, { error: "Estimated time required. e.g est_time:3020", action: requestAction.inputError })
+   }
+   //check if there's no estimated fare
+   if (!est_fare) {
+      return helpers.outputResponse(ws, { error: "Estimated fare required. e.g est_fare:300-500", action: requestAction.inputError })
+   }
 
+   //check the class of ride
    if (["A", "B", "C", "D"].indexOf(rideClass) === -1) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid class" })
    }
@@ -219,7 +231,7 @@ trip.endTrip = (ws, payload) => {
 }
 
 //for canceling a trip
-trip.cancelRequest = (ws, payload) => {
+trip.cancelRequest = async (ws, payload) => {
    let rider_id = helpers.getInputValueString(payload, 'rider_id')
    let trip_id = helpers.getInputValueString(payload, 'trip_id')
    let cancelLevel = helpers.getInputValueString(payload, 'cancel_level')
@@ -238,6 +250,8 @@ trip.cancelRequest = (ws, payload) => {
          trip.requestDriver(ws, getPendingData)
       } else {
          delete socketUser.pendingTrip[rider_id]
+         //send the response to the driver
+
       }
       // helpers
    } else if (cancelLevel === '2') {
@@ -248,6 +262,38 @@ trip.cancelRequest = (ws, payload) => {
       //log the data on the database
       ///calculate the price the user has to pay for this level
    }
+}
+
+//for rating a driver
+trip.rateUser = async (ws, payload) => {
+   let trip_id = helpers.getInputValueString(payload, 'trip_id')
+   let rating = helpers.getInputValueString(payload, 'rating')
+   let user_id = helpers.getInputValueString(payload, 'user_id')
+   //check length
+   if (!trip_id || trip_id.length !== 24) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "trip id is required" })
+   }
+   //check length
+   if (!rating || isNaN(rating) || ['1', '2', '3', '4', '5'].indexOf(rating) === -1) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Rating point is required" })
+   }
+   //check the user ID
+   if (!user_id) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "User id is required" })
+   }
+
+   //save the rating
+   let saveRating = await tripModel.TripRatings.create({
+      user_id, trip_id, rating, rater_id: ws._user_data.token,
+   }).catch(e => ({ error: e }))
+
+   //check if error
+   if (!saveRating || saveRating.error) {
+      return helpers.outputResponse(ws, { action: requestAction.serverError })
+   }
+
+   helpers.outputResponse(ws, { action: requestAction.ratingSubmittedSuccessfully })
+
 }
 
 
