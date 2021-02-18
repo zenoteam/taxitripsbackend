@@ -86,6 +86,7 @@ socket.createServer = (httpServer) => {
          // but before doing that, we have to wait for some seconds or minutes. A number of things could disconnect a device
          // it could incoming call, bad network, app closure etc. So to avoid querying database now and then, we wait for reconnection.
          let userData = ws._user_data // this will return the user data added to the ws obj.
+         console.log('disconnnected', userData.token)
          // if the user is a driver
          if (userData.user_type === 'driver') {
             delete socketUsers.online[userData.token]
