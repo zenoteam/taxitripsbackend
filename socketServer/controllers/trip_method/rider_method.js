@@ -72,7 +72,7 @@ riderMethod.RequestClassA = async (ws, payload) => {
          rider_id: riderData.token,
          action: requestAction.newTripRequest,
       }
-
+      console.log(socketUser.online)
       //if driver online
       if (socketUser.online[driverData.user_id]) {
          helpers.outputResponse(ws, sendData, socketUser.online[driverData.user_id])
