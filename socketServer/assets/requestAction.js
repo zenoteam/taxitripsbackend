@@ -13,6 +13,7 @@ requestAction.rideRecommendation = "recommending_another_ride_class"
 requestAction.driverEndRide = "driver_end_ride"
 requestAction.driverEndRideSuccessfully = "ride_ended_successfully"
 requestAction.tripCancelSuccessfully = "trip_cancel_successfully"
+requestAction.tripEstimatedFare = "trip_estimated_fare"
 requestAction.ratingSubmittedSuccessfully = "user_rating_submitted_successfully"
 
 module.exports = requestAction;

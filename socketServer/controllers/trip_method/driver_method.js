@@ -30,31 +30,6 @@ const getRiderData = (payload, pendingData) => {
    }
 }
 
-//for getting waiting time charge
-const getWaitingTimeCharges = (waitingTime, maxAllowTimeInSec = 180, chargePerMinute = 50) => {
-   let getTimeSpent = waitingTime ? (waitingTime > maxAllowTimeInSec) ? waitingTime - maxAllowTimeInSec : 0 : 0
-   let chargePerSec = chargePerMinute / 60
-   return Math.ceil(chargePerSec * getTimeSpent)
-
-}
-
-//for getting waiting time charge
-const getDistanceCoveredCharges = (totalDstInKM, chargePerKM = 100) => {
-   if (isNaN(totalDstInKM)) return //if there's no valid value return
-   totalDstInKM = parseFloat(totalDstInKM)
-   let chargePerMeter = chargePerKM / 1000 //get the charge per meter
-   return Math.ceil((totalDstInKM * 1000) * chargePerMeter)
-}
-
-//for getting waiting time charge
-const getTimeCoveredCharges = (totalTimeInSec, chargePerMinute = 100) => {
-   if (isNaN(totalTimeInSec)) return //if there's no valid value return
-   let chargePerSec = chargePerMinute / 60 //get the charge per second
-   return Math.ceil(totalTimeInSec * chargePerSec) //calculate the prce
-}
-
-
-
 
 //function that handles class A ride acceptance for driver
 driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
@@ -457,18 +432,18 @@ driverMethod.EndRide = async (ws, payload) => {
    let totalFare;
    let getFare
    //get the waiting time far
-   let getWaitingFare = getWaitingTimeCharges(waitingTime, 180, waitingFarePerMinute)
+   let getWaitingFare = helpers.getWaitingTimeCharges(waitingTime, 180, waitingFarePerMinute)
    //if the time covered is more than the est time or the distance covered is less than the estimated distance
    if ((totalTimeCovered > estTime) || (totalDstCovered < estDst)) {
       //then calculate fare by time
-      getFare = getTimeCoveredCharges(totalTimeCovered, timeFarePerMinute)
+      getFare = helpers.getTimeCoveredCharges(totalTimeCovered, timeFarePerMinute)
       //split the fare if not a class a ride
       if (payload.class !== 'A') {
          getFare /= payload.class === 'B' ? 2 : payload.class === 'C' ? 3 : 4
       }
    } else {
       //else calculate fare by distance
-      getFare = getDistanceCoveredCharges(totalDstCovered, distanceFarePerKM)
+      getFare = helpers.getDistanceCoveredCharges(totalDstCovered, distanceFarePerKM)
       //split the fare if not a class a ride
       if (payload.class !== 'A') {
          getFare /= payload.class === 'B' ? 2 : payload.class === 'C' ? 3 : 4
@@ -561,6 +536,9 @@ driverMethod.EndRide = async (ws, payload) => {
    helpers.outputResponse(ws, sendData)
 }
 
+
+//to get estimated fare 
+driverMethod.getEstima
 
 
 

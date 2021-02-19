@@ -72,7 +72,6 @@ socket.createServer = (httpServer) => {
       //add the user to the online object using his unique id with the socket id for easiest communication
       socketUsers.online[ws._user_data.token] = ws.id;
       console.log('new connection', ws._user_data.token)
-      console.log(socketUsers.online)
       //create incoming message event listener for the connected device
       ws.on("msg", data => {
          //msg is event name where the connected device would have to fire when sending request to the server
@@ -88,6 +87,7 @@ socket.createServer = (httpServer) => {
          // it could incoming call, bad network, app closure etc. So to avoid querying database now and then, we wait for reconnection.
          let userData = ws._user_data // this will return the user data added to the ws obj.
          console.log('disconnnected', userData.token)
+
          // if the user is a driver
          if (userData.user_type === 'driver') {
             delete socketUsers.online[userData.token]

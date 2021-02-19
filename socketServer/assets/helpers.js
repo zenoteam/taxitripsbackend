@@ -53,5 +53,30 @@ helpers.outputResponse = (ws, payload, ws_id) => {
    }
 }
 
+//for getting waiting time charge
+helpers.getWaitingTimeCharges = (waitingTime, maxAllowTimeInSec = 180, chargePerMinute = 50) => {
+   let getTimeSpent = waitingTime ? (waitingTime > maxAllowTimeInSec) ? waitingTime - maxAllowTimeInSec : 0 : 0
+   let chargePerSec = chargePerMinute / 60
+   return Math.ceil(chargePerSec * getTimeSpent)
+
+}
+
+//for getting waiting time charge
+helpers.getDistanceCoveredCharges = (totalDstInKM, chargePerKM = 100) => {
+   if (isNaN(totalDstInKM)) return //if there's no valid value return
+   totalDstInKM = parseFloat(totalDstInKM)
+   let chargePerMeter = chargePerKM / 1000 //get the charge per meter
+   return Math.ceil((totalDstInKM * 1000) * chargePerMeter)
+}
+
+//for getting waiting time charge
+helpers.getTimeCoveredCharges = (totalTimeInSec, chargePerMinute = 100) => {
+   if (isNaN(totalTimeInSec)) return //if there's no valid value return
+   let chargePerSec = chargePerMinute / 60 //get the charge per second
+   return Math.ceil(totalTimeInSec * chargePerSec) //calculate the prce
+}
+
+
+
 
 module.exports = helpers;
