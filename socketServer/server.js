@@ -29,8 +29,8 @@ socket.createServer = (httpServer) => {
          token: userToken,
          user_type: userType
       }
-      next()
-      return
+      return next()
+
 
       //if there's no token or the token is invalid, terminate the connection
       if (!userToken || userToken.indexOf('Bearer') === -1) {
