@@ -430,27 +430,44 @@ driverMethod.EndRide = async (ws, payload) => {
    let waitingFarePerMinute = 10
    //variable
    let totalFare;
-   let getFare
    //get the waiting time far
    let getWaitingFare = helpers.getWaitingTimeCharges(waitingTime, 180, waitingFarePerMinute)
    //if the time covered is more than the est time or the distance covered is less than the estimated distance
-   if ((totalTimeCovered > estTime) || (totalDstCovered < estDst)) {
-      //then calculate fare by time
-      getFare = helpers.getTimeCoveredCharges(totalTimeCovered, timeFarePerMinute)
-      //split the fare if not a class a ride
-      if (payload.class !== 'A') {
-         getFare /= payload.class === 'B' ? 2 : payload.class === 'C' ? 3 : 4
-      }
-   } else {
-      //else calculate fare by distance
-      getFare = helpers.getDistanceCoveredCharges(totalDstCovered, distanceFarePerKM)
-      //split the fare if not a class a ride
-      if (payload.class !== 'A') {
-         getFare /= payload.class === 'B' ? 2 : payload.class === 'C' ? 3 : 4
-      }
+
+   //get time fare
+   //then calculate fare by time
+   let getTimeFare = helpers.getTimeCoveredCharges(totalTimeCovered, timeFarePerMinute)
+   //split the fare if not a class a ride
+   if (payload.class !== 'A') {
+      getTimeFare /= payload.class === 'B' ? 2 : payload.class === 'C' ? 3 : 4
    }
+
+   //get distance fare
+   //else calculate fare by distance
+   let getDstFare = helpers.getDistanceCoveredCharges(totalDstCovered, distanceFarePerKM)
+   //split the fare if not a class a ride
+   if (payload.class !== 'A') {
+      getDstFare /= payload.class === 'B' ? 2 : payload.class === 'C' ? 3 : 4
+   }
+
+   // if ((totalTimeCovered > estTime) || (totalDstCovered < estDst)) {
+   //    //then calculate fare by time
+   //    getFare = helpers.getTimeCoveredCharges(totalTimeCovered, timeFarePerMinute)
+   //    //split the fare if not a class a ride
+   //    if (payload.class !== 'A') {
+   //       getFare /= payload.class === 'B' ? 2 : payload.class === 'C' ? 3 : 4
+   //    }
+   // } else {
+   //    //else calculate fare by distance
+   //    getFare = helpers.getDistanceCoveredCharges(totalDstCovered, distanceFarePerKM)
+   //    //split the fare if not a class a ride
+   //    if (payload.class !== 'A') {
+   //       getFare /= payload.class === 'B' ? 2 : payload.class === 'C' ? 3 : 4
+   //    }
+   // }
+
    //sum the total fare
-   totalFare = Math.ceil(getFare + getWaitingFare + baseFare)
+   totalFare = Math.ceil(getTimeFare + getDstFare + getWaitingFare + baseFare)
    //get people that hv been dropped off
    let dropOffRiders = getUser.riders.filter(d => d.status === 'completed')
    //clear the driver from ontrip

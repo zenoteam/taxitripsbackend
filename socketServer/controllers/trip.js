@@ -299,16 +299,16 @@ trip.rateUser = async (ws, payload) => {
 //for getting estimated fare
 trip.getEstimatedFare = (ws, payload) => {
    let est_time = helpers.getInputValueNumber(payload, 'est_time')
-   // let est_dst = helpers.getInputValueNumber(payload, 'est_dst')
+   let est_dst = helpers.getInputValueNumber(payload, 'est_dst')
 
-   // if (!est_dst || isNaN(est_dst)) {
-   //    return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid estimated distance is required" })
-   // }
+   if (!est_dst || isNaN(est_dst)) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid estimated distance is required" })
+   }
    if (!est_time || isNaN(est_time)) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid estimated time is required" })
    }
    let getFare = helpers.getTimeCoveredCharges(est_time, 15)
-   let estFare = `${getFare}-${getFare + 400}`
+   let estFare = `${getFare}-${Math.ceil(getFare / 2)}`
    return helpers.outputResponse(ws, { action: requestAction.tripEstimatedFare, fare: estFare })
 }
 
