@@ -55,7 +55,7 @@ driver.setOnlineStatusTem = async (ws, payload) => {
       updateStatus = await driverModel.findOneAndUpdate({ user_id: driverId },
          { online: false, }, { upsert: true }).catch(e => ({ error: e }))
    } else {
-      updateStatus = await driverModel.findOneAndUpdate({ user_id: driverId },
+      updateStatus = await driverModel.findOneAndUpdate({ email: user_email },
          {
             user_id: driverId,
             user_email: email,

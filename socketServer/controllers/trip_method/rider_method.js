@@ -80,6 +80,7 @@ riderMethod.RequestClassA = async (ws, payload) => {
          //if driver's device is not reachable (TODO)
          // console.log(driverData.user_id)
          helpers.outputResponse(ws, sendData, { action: requestAction.driverNotOnline })
+         console.log(socketUser.online)
       }
    } else {
       //find any pending request if any
