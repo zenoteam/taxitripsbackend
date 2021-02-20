@@ -307,8 +307,10 @@ trip.getEstimatedFare = (ws, payload) => {
    if (!est_time || isNaN(est_time)) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid estimated time is required" })
    }
-   let getFare = helpers.getTimeCoveredCharges(est_time, 15)
-   let estFare = `${getFare}-${Math.ceil(getFare / 2)}`
+   let getTimeFare = helpers.getTimeCoveredCharges(est_time, 15)
+   let getDstFare = helpers.getTimeCoveredCharges(est_dst, 15)
+   let total = Math.ceil(getTimeFare + getDstFare);
+   let estFare = `${total}-${Math.ceil(total / 2)}`
    return helpers.outputResponse(ws, { action: requestAction.tripEstimatedFare, fare: estFare })
 }
 
