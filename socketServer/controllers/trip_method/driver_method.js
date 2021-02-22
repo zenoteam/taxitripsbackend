@@ -13,8 +13,8 @@ const getRiderData = (payload, pendingData) => {
       name: pendingData.name,
       email: pendingData.email,
       phone: pendingData.phone,
-      startAddr: pendingData.start_address,
-      endAddr: pendingData.end_address,
+      start_address: pendingData.start_address,
+      end_address: pendingData.end_address,
       est_dst: pendingData.distance,
       est_time: pendingData.est_time,
       est_fare: pendingData.est_fare,
@@ -26,6 +26,7 @@ const getRiderData = (payload, pendingData) => {
       end_time: 0,
       total_distance: 0,
       status: "request_accepted",
+      cancel_reason: {},
       fare: 0,
    }
 }

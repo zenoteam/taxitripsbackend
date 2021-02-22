@@ -131,5 +131,5 @@ const DriverWorkHours = new Schema({
 module.exports = {
    TripRequests: dbConnector.zenoTripDB.model('trip_requests', TripRequests),
    TripRatings: dbConnector.zenoTripDB.model('trip_ratings', TripRatings),
-   DriverWorkHours: dbConnector.zenoTripDB.model('driver_worker_hours', DriverWorkHours),
+   DriverWorkHours: dbConnector.zenoTripDB.model('driver_work_hours', DriverWorkHours),
 }
