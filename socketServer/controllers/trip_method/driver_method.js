@@ -554,11 +554,5 @@ driverMethod.EndRide = async (ws, payload) => {
 }
 
 
-//to get estimated fare 
-driverMethod.getEstima
-
-
-
-
 
 module.exports = driverMethod;

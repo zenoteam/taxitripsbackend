@@ -310,7 +310,7 @@ trip.getEstimatedFare = (ws, payload) => {
    let getTimeFare = helpers.getTimeCoveredCharges(est_time, 15)
    let getDstFare = helpers.getTimeCoveredCharges(est_dst, 15)
    let total = Math.ceil(getTimeFare + getDstFare);
-   let estFare = `${total}-${Math.ceil(total / 2)}`
+   let estFare = `${total}-${total + Math.ceil(total / 2)}`
    return helpers.outputResponse(ws, { action: requestAction.tripEstimatedFare, fare: estFare })
 }
 
