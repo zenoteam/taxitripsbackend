@@ -528,7 +528,8 @@ driverMethod.EndRide = async (ws, payload) => {
    //add the distance and the tm the driver has covered
    if ((rideClass === "B" && dropOffRiders.length === 1) ||
       (rideClass === "C" && dropOffRiders.length === 2) ||
-      (rideClass === "D" && dropOffRiders.length === 3)) {
+      (rideClass === "D" && dropOffRiders.length === 3) ||
+      rideClass === "A") {
       let addDriverKM = await tripModel.DriverWorkHours.create({
          user_id: ws._user_data.token,
          trip_id: payload.trip_id,
