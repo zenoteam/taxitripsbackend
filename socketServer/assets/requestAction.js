@@ -17,5 +17,6 @@ requestAction.driverEndRideSuccessfully = "ride_ended_successfully"
 requestAction.tripCancelSuccessfully = "trip_cancel_successfully"
 requestAction.tripEstimatedFare = "trip_estimated_fare"
 requestAction.ratingSubmittedSuccessfully = "user_rating_submitted_successfully"
+requestAction.newRideJoin = "new_rider_join_trip"
 
 module.exports = requestAction;

@@ -150,7 +150,7 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
          {
             $push: { riders: riderData },
             ride_status: "on_ride",
-         }, { new: true, }).catch(e => ({ error: e }))
+         }, { new: true, lean: true }).catch(e => ({ error: e }))
 
       //if there's error
       if (!updateTrip || updateTrip.error) {
@@ -175,12 +175,21 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
       //send the response to the user
       if (socketUser.online[payload.rider_id]) {
          helpers.outputResponse(ws, sendData, socketUser.online[payload.rider_id])
+         //also send to other riders
+         for (let i of sendData.riders) {
+            if (i.rider_id !== pendingData.rider_id && i.status !== 'cancel') {
+               if (socketUser.online[i.rider_id]) {
+                  helpers.outputResponse(ws, { ...pendingData, action: requestAction.newRideJoin }, socketUser.online[i.rider_id])
+               } else {
+                  console.log('Rider not online', i.rider_id)
+               }
+            }
+         }
       }
       //send the response to the driver
       helpers.outputResponse(ws, { action: requestAction.tripRequestAvailabe, class: "B", rider: 2, rider_id: payload.rider_id, trip_id: updateTrip._id })
    }
 }
-
 
 //function that handles class C ride acceptance for driver
 driverMethod.AcceptClassC = async (ws, payload, pendingData) => {
@@ -248,7 +257,7 @@ driverMethod.AcceptClassC = async (ws, payload, pendingData) => {
          {
             $push: { riders: riderData },
             ride_status: pendingData.rider === 3 ? "on_ride" : "waiting",
-         }, { new: true }).catch(e => ({ error: e }))
+         }, { new: true, lean: true }).catch(e => ({ error: e }))
 
       //if there's error
       if (!updateTrip || updateTrip.error) {
@@ -274,6 +283,14 @@ driverMethod.AcceptClassC = async (ws, payload, pendingData) => {
       //send the response to the user
       if (socketUser.online[payload.rider_id]) {
          helpers.outputResponse(ws, sendData, socketUser.online[payload.rider_id])
+         //also send to other riders
+         for (let i of sendData.riders) {
+            if (i.rider_id !== pendingData.rider_id && i.status !== 'cancel') {
+               if (socketUser.online[i.rider_id]) {
+                  helpers.outputResponse(ws, { ...pendingData, action: requestAction.newRideJoin }, socketUser.online[i.rider_id])
+               }
+            }
+         }
       }
       //send the response to the driver
       let sendData1 = {
@@ -379,6 +396,14 @@ driverMethod.AcceptClassD = async (ws, payload, pendingData) => {
       //send the response to the user
       if (socketUser.online[payload.rider_id]) {
          helpers.outputResponse(ws, sendData, socketUser.online[payload.rider_id])
+         //also send to other riders
+         for (let i of sendData.riders) {
+            if (i.rider_id !== pendingData.rider_id && i.status !== 'cancel') {
+               if (socketUser.online[i.rider_id]) {
+                  helpers.outputResponse(ws, { ...pendingData, action: requestAction.newRideJoin }, socketUser.online[i.rider_id])
+               }
+            }
+         }
       }
       //send the response to the driver
       let sendData1 = {
@@ -391,7 +416,6 @@ driverMethod.AcceptClassD = async (ws, payload, pendingData) => {
    }
 }
 
-
 // when the driver arrives the pickup location
 driverMethod.ArrivePickUp = async (ws, payload) => {
    let rideClass = payload.class
@@ -400,7 +424,7 @@ driverMethod.ArrivePickUp = async (ws, payload) => {
    if (["A", "B", "C", "D"].indexOf(rideClass) > -1) {
       //update the data to arrive pickup
       updateData = await tripModel.TripRequests.findOneAndUpdate({ _id: payload.trip_id, 'riders.rider_id': payload.rider_id },
-         { $set: { 'riders.$.status': 'arrive_pickup', 'riders.$.arrive_pickup_at': arriveTime } }, { new: true }).catch(e => ({ error: e }))
+         { $set: { 'riders.$.status': 'arrive_pickup', 'riders.$.arrive_pickup_at': arriveTime } }, { new: true, lean: true }).catch(e => ({ error: e }))
    } else {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Unknown Class" })
    }
@@ -410,9 +434,20 @@ driverMethod.ArrivePickUp = async (ws, payload) => {
       //do somthing here
    }
    //send the response to the rider (user)
-   if (socketUser.online[payload.rider_id]) {
-      helpers.outputResponse(ws, { action: requestAction.driverArrivePickUp }, socketUser.online[payload.rider_id])
+   // if (socketUser.online[payload.rider_id]) {
+   //    helpers.outputResponse(ws, { action: requestAction.driverArrivePickUp }, socketUser.online[payload.rider_id])
+   //also send to other riders
+   for (let i of updateData.riders) {
+      if (i.status !== 'cancel') {
+         if (socketUser.online[i.rider_id]) {
+            helpers.outputResponse(ws, {
+               rider_id: payload.rider_id,
+               action: requestAction.driverArrivePickUp
+            }, socketUser.online[i.rider_id])
+         }
+      }
    }
+   // }
 }
 
 
@@ -645,3 +680,4 @@ driverMethod.EndRide = async (ws, payload) => {
 
 
 module.exports = driverMethod;
+

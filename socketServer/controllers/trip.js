@@ -166,6 +166,34 @@ trip.arrivePickUp = (ws, payload) => {
 
 }
 
+//for driver that navigate to pick up
+trip.driverGoToPickUp = (ws, payload) => {
+   let rider_id = helpers.getInputValueString(payload, 'rider_id')
+   let riders = helpers.getInputValueArray(payload, 'riders')
+
+   //if the rider is not submitted
+   if (!rider_id) {
+      return helpers.outputResponse(ws, { error: requestAction.inputError, error: "Rider ID is required" })
+   }
+
+   if (!(riders instanceof Array) || riders.length !== 0) {
+      return helpers.outputResponse(ws, { error: requestAction.inputError, error: "Riders data is required" })
+   }
+   //send to the riders
+   for (let i of riders) {
+      if (i.status !== 'cancel') {
+         //if online
+         if (socketUser.online[i.rider_id]) {
+            helpers.outputResponse(ws, {
+               action: requestAction.driverGoingToPickUpLocation,
+               trip_id: i.trip_id, //trip id
+               rider_id: payload.rider_id // id of the person driver going to pick
+            }, socketUser.online[i.rider_id])
+         }
+      }
+   }
+}
+
 //for a driver to start trip
 trip.startTrip = (ws, payload) => {
    let tripID = helpers.getInputValueString(payload, 'trip_id')

@@ -163,7 +163,8 @@ riderMethod.RequestClassB = async (ws, payload) => {
             ...payload,
             driver: { user_id: td.driver_id },
             trip_id: td._id,
-            request_time: new Date()
+            request_time: new Date(),
+            rider_id: riderData.token //add the rider id
          }
          //send the request to the driver
          let sendData = {
@@ -224,6 +225,7 @@ riderMethod.RequestClassB = async (ws, payload) => {
             })
          //add the rider position
          payload.rider = 1
+         payload.rider_id = riderData.token //add the rider id
          //hold the request payload and the driver's data till the driver accept the request
          socketUser.pendingTrip[riderData.token] = { ...payload, driver: driverData.user_id, request_time: new Date() }
 
@@ -289,7 +291,8 @@ riderMethod.RequestClassC = async (ws, payload) => {
             ...payload,
             driver: { user_id: td.driver_id },
             trip_id: td._id,
-            request_time: new Date()
+            request_time: new Date(),
+            rider_id: riderData.token //add the rider id
          }
          //send the request to the driver
          let sendData = {
@@ -352,6 +355,7 @@ riderMethod.RequestClassC = async (ws, payload) => {
             })
          //add the rider position
          payload.rider = 1
+         payload.rider_id = riderData.token //add the rider id
          //hold the request payload and the driver's data till the driver accept the request
          socketUser.pendingTrip[riderData.token] = { ...payload, driver: driverData.user_id, request_time: new Date() }
 
@@ -418,7 +422,8 @@ riderMethod.RequestClassD = async (ws, payload) => {
             ...payload,
             driver: { user_id: td.driver_id },
             trip_id: td._id,
-            request_time: new Date()
+            request_time: new Date(),
+            rider_id: riderData.token //add the rider id
          }
          //send the request to the driver
          let sendData = {
@@ -481,6 +486,7 @@ riderMethod.RequestClassD = async (ws, payload) => {
             })
          //add the rider position
          payload.rider = 1
+         payload.rider_id = riderData.token //add the rider id
          //hold the request payload and the driver's data till the driver accept the request
          socketUser.pendingTrip[riderData.token] = { ...payload, driver: driverData.user_id, request_time: new Date() }
 
