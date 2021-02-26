@@ -58,7 +58,6 @@ helpers.getWaitingTimeCharges = (waitingTime, maxAllowTimeInSec = 180, chargePer
    let getTimeSpent = waitingTime ? (waitingTime > maxAllowTimeInSec) ? waitingTime - maxAllowTimeInSec : 0 : 0
    let chargePerSec = chargePerMinute / 60
    return Math.ceil(chargePerSec * getTimeSpent)
-
 }
 
 //for getting waiting time charge

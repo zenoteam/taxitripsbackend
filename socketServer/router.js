@@ -16,6 +16,12 @@ module.exports = (ws, payload) => {
    //so we split the slash (/) to get the file and the method name 
    let sAction = payload.action.split("/") //split the payload
 
+   //if client is pinging to persist connection
+   if (sAction[0] === 'hello_server') {
+      return helpers.outputResponse(ws, { action: 'ping' })
+   }
+
+
    //check if the payload not exact length
    if (sAction.length !== 2) {
       return helpers.outputResponse(ws, { error: "Endpoint not specified", action: requestAction.inputError })

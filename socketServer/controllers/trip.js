@@ -77,6 +77,8 @@ trip.requestDriver = (ws, payload) => {
          break;
       case "C":
          tripRidersMethod.RequestClassC(ws, payload);
+      case "D":
+         tripRidersMethod.RequestClassD(ws, payload);
          break;
       default:
          helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid request" })
@@ -129,6 +131,8 @@ trip.acceptRequest = (ws, payload) => {
             break;
          case "C":
             driverMethod.AcceptClassC(ws, payload, rData)
+         case "D":
+            driverMethod.AcceptClassD(ws, payload, rData)
             break;
          default:
             helpers.outputResponse(ws, { action: requestAction.inputError, error: "Unknown Request" })
