@@ -278,7 +278,7 @@ trip.rateUser = async (ws, payload) => {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "trip id is required" })
    }
    //check length
-   if (!rating || isNaN(rating) || ['1', '2', '3', '4', '5'].indexOf(rating) === -1) {
+   if (!rating || isNaN(rating) || ['0', '1', '2', '3', '4', '5'].indexOf(rating) === -1) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Rating point is required" })
    }
    //check the user ID

@@ -77,4 +77,18 @@ driver.setOnlineStatusTem = async (ws, payload) => {
    helpers.outputResponse(ws, { action: requestAction.driverStatusSet, status })
 }
 
+driver.getOnlineStatus = async (ws, payload) => {
+   let driverId = ws._user_data.token
+   //check if the driver is still online
+   let getStatus = await driverModel.findOne({ user_id: driverId }, { online: 1 }).catch(e => ({ error: e }))
+   console.log(driverId)
+   console.log(getStatus)
+   if (!getStatus || getStatus.error) {
+      helpers.outputResponse(ws, { action: requestAction.driverStatusSet, status: 'off' })
+   } else {
+      // console.log(getStatus)
+      helpers.outputResponse(ws, { action: requestAction.driverStatusSet, status: getStatus.online ? 'on' : 'off' })
+   }
+
+}
 module.exports = driver;
