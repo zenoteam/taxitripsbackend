@@ -13,6 +13,11 @@ const getRiderData = (payload, pendingData) => {
       name: pendingData.name,
       email: pendingData.email,
       phone: pendingData.phone,
+      avatar: pendingData.avatar,
+      start_lon: pendingData.start_lon,
+      start_lat: pendingData.start_lat,
+      end_lon: pendingData.end_lon,
+      end_lat: pendingData.end_lat,
       start_address: pendingData.start_address,
       end_address: pendingData.end_address,
       est_dst: pendingData.distance,
@@ -715,7 +720,7 @@ driverMethod.CancelRide = async (ws, payload) => {
          newCompase = onTripUser[onTripUser.findIndex(e => e.rider_id !== rider_id)]
          //if there's no other rider to take the compass
          if (!newCompase || !newCompase.start_lat) {
-            newCompase = { start_lat: 0, start_lon: 0, end_lat: 0, end_lon: 0 }
+            newCompase = { start_lat: 0, start_lon: 0, end_lat: 0, end_lon: 0, rider_id: 'none' }
          }
       }
 
@@ -729,6 +734,7 @@ driverMethod.CancelRide = async (ws, payload) => {
                   'riders.$.cancel_reason': cancelData,
                   'location.0.origin.coordinates': [newCompase.start_lon, newCompase.start_lat],
                   'location.0.destination.coordinates': [newCompase.end_lon, newCompase.end_lat],
+                  rider_compass: newCompase.rider_id
                } :
                {
                   'riders.$.status': 'cancel',
