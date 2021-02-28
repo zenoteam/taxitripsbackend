@@ -32,17 +32,17 @@ const getRiderData = (payload, pendingData) => {
 }
 
 
+
 //function that handles class A ride acceptance for driver
 driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
    //get the driver's unique id
    let driverId = ws._user_data.token
    // update the driver's trip data
-   let updateDriver = await driverModel.findOneAndUpdate({ user_id: driverId }, { on_trip: true }, { new: true }).catch(e => ({ error: e }))
+   let updateDriver = await driverModel.findOneAndUpdate({ user_id: driverId }, { on_trip: "yes" }, { new: true }).catch(e => ({ error: e }))
    //if there's an error 
    if (!updateDriver || updateDriver.error) {
       return helpers.outputResponse(ws, { action: requestAction.serverError })
    }
-
    //delete the request from pending requests
    delete socketUser.pendingTrip[payload.rider_id]
 
@@ -54,7 +54,8 @@ driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
       driver_id: driverId,
       riders: riderData,
       ride_status: "waiting",
-      ride_class: 'A',
+      ride_class: "A",
+      rider_compass: payload.rider_id,
       location: [{
          origin: { coordinates: [pendingData.start_lon, pendingData.start_lat] },
          destination: { coordinates: [pendingData.end_lon, pendingData.end_lat] }
@@ -84,7 +85,6 @@ driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
    }
 }
 
-
 //function that handles class B ride acceptance for driver
 driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
    //get the driver's unique id
@@ -92,7 +92,7 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
    //get the rider's position (if first rider or second rider)
    let riderNumber = pendingData.rider
    // update the driver's trip data
-   let updateDriver = await driverModel.findOneAndUpdate({ user_id: driverId }, { on_trip: riderNumber === 2 ? true : false }, { new: true }).catch(e => ({ error: e }))
+   let updateDriver = await driverModel.findOneAndUpdate({ user_id: driverId }, { on_trip: riderNumber === 2 ? "yes" : "waiting" }, { new: true }).catch(e => ({ error: e }))
    //if there's an error 
    if (!updateDriver || updateDriver.error) {
       return helpers.outputResponse(ws, { action: requestAction.serverError })
@@ -106,7 +106,8 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
          driver_id: driverId,
          riders: riderData,
          ride_status: "waiting",
-         ride_class: 'B',
+         ride_class: "B",
+         rider_compass: payload.rider_id,
          location: [{
             origin: { coordinates: [pendingData.start_lon, pendingData.start_lat] },
             destination: { coordinates: [pendingData.end_lon, pendingData.end_lat] }
@@ -198,7 +199,7 @@ driverMethod.AcceptClassC = async (ws, payload, pendingData) => {
    //get the rider's position (if first rider or second rider)
    let riderNumber = pendingData.rider
    // update the driver's trip data
-   let updateDriver = await driverModel.findOneAndUpdate({ user_id: driverId }, { on_trip: riderNumber === 3 ? true : false }, { new: true }).catch(e => ({ error: e }))
+   let updateDriver = await driverModel.findOneAndUpdate({ user_id: driverId }, { on_trip: riderNumber === 3 ? "yes" : "waiting" }, { new: true }).catch(e => ({ error: e }))
    //if there's an error 
    if (!updateDriver || updateDriver.error) {
       return helpers.outputResponse(ws, { action: requestAction.serverError })
@@ -214,6 +215,7 @@ driverMethod.AcceptClassC = async (ws, payload, pendingData) => {
          riders: riderData,
          ride_status: "waiting",
          ride_class: "C",
+         rider_compass: payload.rider_id,
          location: [{
             origin: { coordinates: [pendingData.start_lon, pendingData.start_lat] },
             destination: { coordinates: [pendingData.end_lon, pendingData.end_lat] }
@@ -303,7 +305,6 @@ driverMethod.AcceptClassC = async (ws, payload, pendingData) => {
    }
 }
 
-
 //function that handles class C ride acceptance for driver
 driverMethod.AcceptClassD = async (ws, payload, pendingData) => {
    //get the driver's unique id
@@ -311,7 +312,7 @@ driverMethod.AcceptClassD = async (ws, payload, pendingData) => {
    //get the rider's position (if first rider or second rider)
    let riderNumber = pendingData.rider
    // update the driver's trip data
-   let updateDriver = await driverModel.findOneAndUpdate({ user_id: driverId }, { on_trip: riderNumber === 4 ? true : false }, { new: true }).catch(e => ({ error: e }))
+   let updateDriver = await driverModel.findOneAndUpdate({ user_id: driverId }, { on_trip: riderNumber === 4 ? "yes" : "waiting" }, { new: true }).catch(e => ({ error: e }))
    //if there's an error 
    if (!updateDriver || updateDriver.error) {
       return helpers.outputResponse(ws, { action: requestAction.serverError })
@@ -327,6 +328,7 @@ driverMethod.AcceptClassD = async (ws, payload, pendingData) => {
          riders: riderData,
          ride_status: "waiting",
          ride_class: "D",
+         rider_compass: payload.rider_id,
          location: [{
             origin: { coordinates: [pendingData.start_lon, pendingData.start_lat] },
             destination: { coordinates: [pendingData.end_lon, pendingData.end_lat] }
@@ -449,7 +451,6 @@ driverMethod.ArrivePickUp = async (ws, payload) => {
    }
    // }
 }
-
 
 //when the driver start trip
 driverMethod.StartRide = async (ws, payload) => {
@@ -677,6 +678,107 @@ driverMethod.EndRide = async (ws, payload) => {
    helpers.outputResponse(ws, sendData)
 }
 
+//when canceling a ride
+driverMethod.CancelRide = async (ws, payload) => {
+   let rider_id = payload.rider_id
+   let trip_id = payload.trip_id
+   let reason_option = payload.reason_option
+   let reason_others = payload.reason_others
+   let userType = ws._user_data.user_type //get the user type
+
+   if (payload.cancel_level === "2") {
+      //cancel level 2 is when a driver accepts a request
+      if (!trip_id || trip_id.length !== 24) {
+         return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Trip id is required" })
+      }
+      //get the trip
+      let getTrip = await tripModel.TripRequests.findOne({ _id: trip_id, riders: { $elemMatch: { rider_id } } }, null, { lean: true }).catch(e => ({ error: e }))
+      //if there's an error
+      if (getTrip && getTrip.error) {
+         return helpers.outputResponse(ws, { action: requestAction.serverError })
+      }
+      //if there's not trip associated
+      if (!getTrip) {
+         return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Trip not found" })
+      }
+      console.log(getTrip)
+      let cancelData = {
+         cancel_by: userType === "driver" ? "driver" : "rider",
+         cancel_reason_option: reason_option,
+         cancel_reason_others: reason_others
+      }
+      //get the location compass use for the trip
+      let getCompass = (getTrip.ride_class !== "A" && getTrip.rider_compass === rider_id) ? true : false
+      //get all the riders who has not canceled the trip
+      let onTripUser = getTrip.riders.filter(e => e.status !== "cancel")
+      let newCompase;
+      //if the canceler was the compass, assign a new compass
+      if (getCompass) {
+         newCompase = onTripUser[onTripUser.findIndex(e => e.rider_id !== rider_id)]
+         //if there's no other rider to take the compass
+         if (!newCompase || !newCompase.start_lat) {
+            newCompase = { start_lat: 0, start_lon: 0, end_lat: 0, end_lon: 0 }
+         }
+      }
+
+      //cancel the trip
+      let cancelTrip = await tripModel.TripRequests.findOneAndUpdate({ _id: trip_id, riders: { $elemMatch: { rider_id } } },
+         {
+            ride_status: getTrip.ride_class === "A" ? "cancel" : onTripUser.length === 1 ? "cancel" : "waiting",
+            $set: getCompass ?
+               {
+                  'riders.$.status': 'cancel',
+                  'riders.$.cancel_reason': cancelData,
+                  'location.origin.coordinates': [newCompase.start_lon, newCompase.start_lat],
+                  'location.destination.coordinates': [newCompase.end_lon, newCompase.end_lat],
+               } :
+               {
+                  'riders.$.status': 'cancel',
+                  'riders.$.cancel_reason': cancelData,
+               },
+         },
+         { new: true, lean: true }
+      )
+      //check for error
+      if (!cancelTrip || cancelTrip.error) {
+         return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Request could not be canceled" })
+      }
+
+      //free the driver 
+      let updateDriver = await driverModel.findOneAndUpdate({ user_id: cancelTrip.driver_id },
+         { on_trip: onTripUser.length === 1 ? "no" : "waiting" }).catch(e => ({ error: e }))
+
+      //notify all the riders that a ride has been canceled
+      for (let i of onTripUser) {
+         //send to all the riders on the trip
+         if (socketUser.online[i.rider_id] && i.status !== "cancel" && i.rider_id !== rider_id) {
+            helpers.outputResponse(ws, {
+               action: requestAction.tripRequestCanceled,
+               cancel_level: payload.cancel_level,
+               rider_id, trip_id
+            }, socketUser.online[i.rider_id])
+         }
+      }
+      //send the response to the appropriate user
+      helpers.outputResponse(ws, {
+         action: requestAction.tripRequestCanceled,
+         cancel_level: payload.cancel_level,
+         rider_id, trip_id
+      }, userType === "driver" ? socketUser.online[payload.rider_id] : socketUser.online[cancelTrip.driver_id])
+
+      //reply the user who initiated the request
+      helpers.outputResponse(ws, {
+         action: requestAction.tripCancelSuccessfully,
+         cancel_level: payload.cancel_level,
+         rider_id, trip_id
+      })
+   } else {
+      delete socketUser.online[rider_id] //
+      helpers.outputResponse(ws, { action: requestAction.inputError, error: "Unknown cancel level" })
+      //log the data on the database
+      ///calculate the price the user has to pay for this level
+   }
+}
 
 
 module.exports = driverMethod;

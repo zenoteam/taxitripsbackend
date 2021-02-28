@@ -3,5 +3,6 @@
 //needs any items held here.
 module.exports = {
    online: {},
-   pendingTrip: {}
+   pendingTrip: {},
+   requestDriverTimer: {}
 }

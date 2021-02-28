@@ -45,9 +45,10 @@ const drivers = new Schema({
       default: false
    },
    on_trip: {
-      type: Boolean,
+      type: String,
       required: true,
-      default: false
+      enum: ['waiting', 'yes', 'no'],
+      default: 'no'
    },
    location: {
       type: {

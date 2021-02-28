@@ -117,29 +117,41 @@ trip.acceptRequest = (ws, payload) => {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Rider id is required" })
    }
 
+   //get the last driver the request was sent to
+   let lastDriver = socketUser.pendingTrip[riderId] ? socketUser.pendingTrip[riderId].driver[socketUser.pendingTrip[riderId].driver.length - 1] : null
+
    //check if the request is still availabe to accept
-   if (socketUser.pendingTrip[riderId] && socketUser.pendingTrip[riderId].class === rideClass) {
-      //get the data from pending request
-      let rData = socketUser.pendingTrip[riderId]
-      //switch the request by class
-      switch (rideClass) {
-         case "A":
-            driverMethod.AcceptClassA(ws, payload, rData)
-            break;
-         case "B":
-            driverMethod.AcceptClassB(ws, payload, rData)
-            break;
-         case "C":
-            driverMethod.AcceptClassC(ws, payload, rData)
-         case "D":
-            driverMethod.AcceptClassD(ws, payload, rData)
-            break;
-         default:
-            helpers.outputResponse(ws, { action: requestAction.inputError, error: "Unknown Request" })
+   if (socketUser.pendingTrip[riderId]) {
+      //if the driver accepting is the last driver the request was sent to
+      if (lastDriver === ws._user_data.token) {
+         //clear the timer request
+         clearTimeout(socketUser.requestDriverTimer[riderId])
+         delete socketUser.requestDriverTimer[riderId] //remove from the object
+
+         //get the data from pending request
+         let rData = socketUser.pendingTrip[riderId]
+         delete socketUser.pendingTrip[riderId] //delete pending data if any
+         //switch the request by class
+         switch (rideClass) {
+            case "A":
+               driverMethod.AcceptClassA(ws, payload, rData)
+               break;
+            case "B":
+               driverMethod.AcceptClassB(ws, payload, rData)
+               break;
+            case "C":
+               driverMethod.AcceptClassC(ws, payload, rData)
+            case "D":
+               driverMethod.AcceptClassD(ws, payload, rData)
+               break;
+            default:
+               helpers.outputResponse(ws, { action: requestAction.inputError, error: "Unknown Request" })
+         }
+      } else {
+         helpers.outputResponse(ws, { action: requestAction.inputError, error: "Request not available" })
       }
    } else {
-      helpers.outputResponse(ws, { action: requestAction.inputError, error: "Request not availabe. May have been canceled" })
-
+      helpers.outputResponse(ws, { action: requestAction.inputError, error: "Request was canceled" })
    }
 }
 
@@ -173,11 +185,11 @@ trip.driverGoToPickUp = (ws, payload) => {
 
    //if the rider is not submitted
    if (!rider_id) {
-      return helpers.outputResponse(ws, { error: requestAction.inputError, error: "Rider ID is required" })
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Rider ID is required" })
    }
 
-   if (!(riders instanceof Array) || riders.length !== 0) {
-      return helpers.outputResponse(ws, { error: requestAction.inputError, error: "Riders data is required" })
+   if (!(riders instanceof Array) || riders.length === 0) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Riders data is required" })
    }
    //send to the riders
    for (let i of riders) {
@@ -265,34 +277,41 @@ trip.endTrip = (ws, payload) => {
 //for canceling a trip
 trip.cancelRequest = async (ws, payload) => {
    let rider_id = helpers.getInputValueString(payload, 'rider_id')
-   let trip_id = helpers.getInputValueString(payload, 'trip_id')
    let cancelLevel = helpers.getInputValueString(payload, 'cancel_level')
    let userType = ws._user_data.user_type //get the user type
 
-   if (['1', '2', '3'].indexOf(cancelLevel) === -1) {
-      return helpers.outputResponse(ws, { error: "Unknown Action", action: requestAction.inputError })
+   //check the cancel level
+   if (["1", "2", "3"].indexOf(cancelLevel) === -1) {
+      return helpers.outputResponse(ws, { error: "Unknown cancel level", action: requestAction.inputError })
    }
-   //cancel level one is just to cancel a request a driver has not accepted
-   if (cancelLevel === '1') {
-      delete socketUser.online[rider_id] //
-      //if the driver cancels first request level 1, search for another driver
+   // console.log(payload)
+   //clear timer and the old data
+   clearTimeout(socketUser.requestDriverTimer[rider_id])
+   delete socketUser.requestDriverTimer[rider_id]
+   //get the rider pending request data
+   let rData = socketUser.pendingTrip[rider_id];
+   // delete the pending data
+   delete socketUser.pendingTrip[rider_id]
+   //cancel level one (1) is just to cancel a request a driver has not accepted
+   if (payload.cancel_level === "1") {
+      //if a driver cancels a request, search for another driver
       if (userType === 'driver') {
-         let getPendingData = socketUser.pendingTrip[payload.rider_id]
-         delete getPendingData.driver //delete the driver data
-         trip.requestDriver(ws, getPendingData)
+         tripRidersMethod['RequestClass' + rData.class](rData.ws, rData, rData.driver)
+         helpers.outputResponse(ws, { action: requestAction.tripCancelSuccessfully })
       } else {
-         delete socketUser.pendingTrip[rider_id]
-         //send the response to the driver
-
+         //send cancel event to driver's if request was sent
+         if (rData.driver && rData.driver.length > 0) {
+            for (let i of rData.driver) {
+               if (socketUser.online[i]) {
+                  helpers.outputResponse(ws, { action: requestAction.tripRequestCanceled, rider_id })
+               }
+            }
+         }
+         //reply the request
+         helpers.outputResponse(ws, { action: requestAction.tripCancelSuccessfully })
       }
-      // helpers
-   } else if (cancelLevel === '2') {
-      delete socketUser.online[rider_id] //
-      //log the data on the database
    } else {
-      delete socketUser.online[rider_id] //
-      //log the data on the database
-      ///calculate the price the user has to pay for this level
+      driverMethod.CancelRide(ws, payload)
    }
 }
 

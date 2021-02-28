@@ -15,12 +15,16 @@ const TripRequests = new Schema({
    },
    ride_status: {
       type: String,
-      enum: ['waiting', 'on_ride', 'completed'],
+      enum: ["waiting", "on_ride", "completed", "cancel"],
       required: true,
    },
    ride_class: {
       type: String,
-      enum: ['A', 'B', 'C', 'D'],
+      enum: ["A", "B", "C", "D"],
+      required: true
+   },
+   rider_compass: {
+      type: String,
       required: true
    },
    location: [{
@@ -28,7 +32,7 @@ const TripRequests = new Schema({
          type: {
             type: String,
             required: true,
-            default: 'Point'
+            default: "Point"
          },
          coordinates: {
             type: [Number],
@@ -39,7 +43,7 @@ const TripRequests = new Schema({
          type: {
             type: String,
             required: true,
-            default: 'Point'
+            default: "Point"
          },
          coordinates: {
             type: [Number],
