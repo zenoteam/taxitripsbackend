@@ -92,7 +92,7 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
    //get the rider's position (if first rider or second rider)
    let riderNumber = pendingData.rider
    // update the driver's trip data
-   let updateDriver = await driverModel.findOneAndUpdate({ user_id: driverId }, { on_trip: riderNumber === 2 ? "yes" : "waiting" }, { new: true }).catch(e => ({ error: e }))
+   let updateDriver = await driverModel.findOneAndUpdate({ user_id: driverId }, { on_trip: riderNumber === 1 ? "waiting" : "yes" }, { new: true }).catch(e => ({ error: e }))
    //if there's an error 
    if (!updateDriver || updateDriver.error) {
       return helpers.outputResponse(ws, { action: requestAction.serverError })
@@ -152,7 +152,6 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
             $push: { riders: riderData },
             ride_status: "on_ride",
          }, { new: true, lean: true }).catch(e => ({ error: e }))
-
       //if there's error
       if (!updateTrip || updateTrip.error) {
          return helpers.outputResponse(ws, { action: requestAction.serverError })
@@ -701,7 +700,6 @@ driverMethod.CancelRide = async (ws, payload) => {
       if (!getTrip) {
          return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Trip not found" })
       }
-      console.log(getTrip)
       let cancelData = {
          cancel_by: userType === "driver" ? "driver" : "rider",
          cancel_reason_option: reason_option,
@@ -729,8 +727,8 @@ driverMethod.CancelRide = async (ws, payload) => {
                {
                   'riders.$.status': 'cancel',
                   'riders.$.cancel_reason': cancelData,
-                  'location.origin.coordinates': [newCompase.start_lon, newCompase.start_lat],
-                  'location.destination.coordinates': [newCompase.end_lon, newCompase.end_lat],
+                  'location.0.origin.coordinates': [newCompase.start_lon, newCompase.start_lat],
+                  'location.0.destination.coordinates': [newCompase.end_lon, newCompase.end_lat],
                } :
                {
                   'riders.$.status': 'cancel',
@@ -760,11 +758,14 @@ driverMethod.CancelRide = async (ws, payload) => {
          }
       }
       //send the response to the appropriate user
-      helpers.outputResponse(ws, {
-         action: requestAction.tripRequestCanceled,
-         cancel_level: payload.cancel_level,
-         rider_id, trip_id
-      }, userType === "driver" ? socketUser.online[payload.rider_id] : socketUser.online[cancelTrip.driver_id])
+      if ((userType === "driver" && socketUser.online[payload.rider_id]) ||
+         (userType !== "driver" && socketUser.online[cancelTrip.driver_id])) {
+         helpers.outputResponse(ws, {
+            action: requestAction.tripRequestCanceled,
+            cancel_level: payload.cancel_level,
+            rider_id, trip_id
+         }, userType === "driver" ? socketUser.online[payload.rider_id] : socketUser.online[cancelTrip.driver_id])
+      }
 
       //reply the user who initiated the request
       helpers.outputResponse(ws, {

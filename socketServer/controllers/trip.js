@@ -290,10 +290,14 @@ trip.cancelRequest = async (ws, payload) => {
    delete socketUser.requestDriverTimer[rider_id]
    //get the rider pending request data
    let rData = socketUser.pendingTrip[rider_id];
-   // delete the pending data
+
    delete socketUser.pendingTrip[rider_id]
    //cancel level one (1) is just to cancel a request a driver has not accepted
    if (payload.cancel_level === "1") {
+      // if the pending data is not found stop
+      if (!rData) {
+         return helpers.outputResponse(ws, { action: requestAction.tripCancelSuccessfully, rider_id })
+      }
       //if a driver cancels a request, search for another driver
       if (userType === 'driver') {
          tripRidersMethod['RequestClass' + rData.class](rData.ws, rData, rData.driver)
