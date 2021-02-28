@@ -615,7 +615,7 @@ driverMethod.EndRide = async (ws, payload) => {
    let dropOffRiders = getUser.riders.filter(d => d.status === 'completed')
    //clear the driver from ontrip
    let updateDriver = await driverModel.findOneAndUpdate({ user_id: ws._user_data.token },
-      { on_trip: false, 'location.coordinates': [payload.longitude, payload.latitude] },
+      { on_trip: "no", 'location.coordinates': [payload.longitude, payload.latitude] },
       { new: true }).catch(e => ({ error: e }))
    //check if it's not updated
    if (!updateDriver || updateDriver.error) {
