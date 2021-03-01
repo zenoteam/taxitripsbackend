@@ -92,6 +92,7 @@ driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
 
 //function that handles class B ride acceptance for driver
 driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
+   console.log('driver', ws._user_data.token, payload)
    //get the driver's unique id
    let driverId = ws._user_data.token
    //get the rider's position (if first rider or second rider)
