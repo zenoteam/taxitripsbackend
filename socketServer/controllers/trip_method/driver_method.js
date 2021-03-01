@@ -175,14 +175,17 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
          riders: updateTrip.riders,
          trip_id: updateTrip._id
       }
-      console.log(socketUser.online)
+      console.log('ONline user', socketUser.online)
+      console.log('sendData', updateTrip.riders)
       //delete the request from pending requests
       delete socketUser.pendingTrip[payload.rider_id]
+      //send the response to the driver
+      helpers.outputResponse(ws, { action: requestAction.tripRequestAvailabe, class: "B", rider: 2, rider_id: payload.rider_id, trip_id: updateTrip._id })
       //send the response to the user
       if (socketUser.online[payload.rider_id]) {
          helpers.outputResponse(ws, sendData, socketUser.online[payload.rider_id])
          //also send to other riders
-         for (let i of sendData.riders) {
+         for (let i of updateTrip.riders) {
             if (i.rider_id !== pendingData.rider_id && i.status !== 'cancel') {
                if (socketUser.online[i.rider_id]) {
                   helpers.outputResponse(ws, { ...pendingData, action: requestAction.newRideJoin }, socketUser.online[i.rider_id])
@@ -192,8 +195,6 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
             }
          }
       }
-      //send the response to the driver
-      helpers.outputResponse(ws, { action: requestAction.tripRequestAvailabe, class: "B", rider: 2, rider_id: payload.rider_id, trip_id: updateTrip._id })
    }
 }
 
