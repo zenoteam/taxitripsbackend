@@ -175,7 +175,7 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
          riders: updateTrip.riders,
          trip_id: updateTrip._id
       }
-
+      console.log(socketUser.online)
       //delete the request from pending requests
       delete socketUser.pendingTrip[payload.rider_id]
       //send the response to the user
