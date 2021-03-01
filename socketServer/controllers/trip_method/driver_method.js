@@ -176,13 +176,35 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
          trip_id: updateTrip._id
       }
       console.log('ONline user', socketUser.online)
-      console.log('sendData', updateTrip.riders)
+      console.log('updated Data', updateTrip.riders)
       //delete the request from pending requests
       delete socketUser.pendingTrip[payload.rider_id]
       //get the old guy
-      let oldGuy = sendData.riders.filter(e => e.rider_id !== payload.rider_id)
+      // let oldGuy = sendData.riders.filter(e => e.rider_id !== payload.rider_id)
       //send the response to the driver
-      helpers.outputResponse(ws, { action: requestAction.tripRequestAvailabe, class: "B", rider: 2, rider_id: payload.rider_id, trip_id: updateTrip._id })
+      helpers.outputResponse(ws, {
+         action: requestAction.tripRequestAvailabe,
+         class: "B", rider: 2,
+         rider_id: payload.rider_id,
+         trip_id: updateTrip._id
+      })
+      //send the response to the riders
+      for (let i of updateTrip.riders) {
+         //if the user's trip was not cancel
+         if (i.rider_id !== payload.rider_id && i.status !== "cancel") {
+            //if the user is online
+            if (socketUser.online[i.rider_id]) {
+               helpers.outputResponse(ws, {
+                  ...pendingData,
+                  action: requestAction.newRideJoin
+               }, socketUser.online[i.rider_id])
+            } else {
+               console.log('Rider not online', i.rider_id)
+            }
+         } else {
+            console.log('No Ride to send the response')
+         }
+      }
       //send the response to the user
       if (socketUser.online[payload.rider_id]) {
          helpers.outputResponse(ws, sendData, socketUser.online[payload.rider_id])
@@ -196,11 +218,11 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
          //       }
          //    }
          // }
-         if (socketUser.online[oldGuy[0].rider_id]) {
-            helpers.outputResponse(ws, { ...pendingData, action: requestAction.newRideJoin }, socketUser.online[oldGuy[0].rider_id])
-         } else {
-            console.log('Rider not online', i.rider_id)
-         }
+         // if (socketUser.online[oldGuy[0].rider_id]) {
+         //    helpers.outputResponse(ws, { ...pendingData, action: requestAction.newRideJoin }, socketUser.online[oldGuy[0].rider_id])
+         // } else {
+         //    console.log('Rider not online', i.rider_id)
+         // }
       }
    }
 }

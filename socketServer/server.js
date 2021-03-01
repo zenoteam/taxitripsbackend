@@ -77,7 +77,7 @@ socket.createServer = (httpServer) => {
          // console.log(data)
          //msg is event name where the connected device would have to fire when sending request to the server
          // data is a variable that returns the payload of the incoming request
-         router(ws, data)
+         router.use(ws, data)
       })
 
 

@@ -4,10 +4,10 @@
 //ws is the connected device data, payload is the the incoming data
 const helpers = require('./assets/helpers')
 const requestAction = require('./assets/requestAction')
+const router = {}
 
 
-
-module.exports = (ws, payload) => {
+router.use = (ws, payload) => {
    //check if there's no payload
    if (!payload || typeof payload.action !== 'string') {
       return helpers.outputResponse(ws, { error: "Endpoint not specified", action: requestAction.inputError })
@@ -52,3 +52,5 @@ module.exports = (ws, payload) => {
       return helpers.outputResponse(ws, { error: "Requested resource not found", action: requestAction.inputError })
    }
 }
+
+module.exports = router;
