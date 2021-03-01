@@ -186,7 +186,7 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
          helpers.outputResponse(ws, sendData, socketUser.online[payload.rider_id])
          //also send to other riders
          for (let i of updateTrip.riders) {
-            if (i.rider_id !== pendingData.rider_id && i.status !== 'cancel') {
+            if (i.rider_id !== payload.rider_id && i.status !== 'cancel') {
                if (socketUser.online[i.rider_id]) {
                   helpers.outputResponse(ws, { ...pendingData, action: requestAction.newRideJoin }, socketUser.online[i.rider_id])
                } else {
