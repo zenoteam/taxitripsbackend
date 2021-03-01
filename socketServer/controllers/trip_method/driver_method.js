@@ -205,7 +205,7 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
             console.log('No Ride to send the response')
          }
       }
-      //send the response to the user
+      //send the response to the last rider
       if (socketUser.online[payload.rider_id]) {
          helpers.outputResponse(ws, sendData, socketUser.online[payload.rider_id])
          //also send to other riders
