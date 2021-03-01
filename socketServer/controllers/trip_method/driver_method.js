@@ -92,7 +92,6 @@ driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
 
 //function that handles class B ride acceptance for driver
 driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
-   console.log('driver', ws._user_data.token, payload)
    //get the driver's unique id
    let driverId = ws._user_data.token
    //get the rider's position (if first rider or second rider)
@@ -143,7 +142,12 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
          helpers.outputResponse(ws, sendData, socketUser.online[payload.rider_id])
       }
       //send the response to the driver
-      helpers.outputResponse(ws, { action: requestAction.tripRequestAvailabe, class: "B", rider: 1, rider_id: payload.rider_id, trip_id: saveTrip._id })
+      helpers.outputResponse(ws, {
+         action: requestAction.tripRequestAvailabe,
+         class: "B", rider: 1,
+         rider_id: payload.rider_id,
+         trip_id: saveTrip._id
+      })
    } else {
       //get the record ID of the first rider
       let recordID = pendingData.trip_id
@@ -162,7 +166,12 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
       if (!updateTrip || updateTrip.error) {
          return helpers.outputResponse(ws, { action: requestAction.serverError })
       }
-      //send response to the user (rider) that a driver accepts the request
+      //delete the request from pending requests
+      delete socketUser.pendingTrip[payload.rider_id]
+
+      //get all the riders who are still on trip
+      let onTripRiders = updateTrip.riders.filter(d => d.status !== "cancel")
+
       let sendData = {
          ...payload,
          car_plate_number: updateDriver.car_plate_number,
@@ -172,15 +181,10 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
          action: requestAction.driverAcceptRequest,
          rider: 2,
          driver_id: driverId,
-         riders: updateTrip.riders,
+         riders: onTripRiders,
          trip_id: updateTrip._id
       }
-      console.log('ONline user', socketUser.online)
-      console.log('updated Data', updateTrip.riders)
-      //delete the request from pending requests
-      delete socketUser.pendingTrip[payload.rider_id]
-      //get the old guy
-      // let oldGuy = sendData.riders.filter(e => e.rider_id !== payload.rider_id)
+
       //send the response to the driver
       helpers.outputResponse(ws, {
          action: requestAction.tripRequestAvailabe,
@@ -189,40 +193,26 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
          trip_id: updateTrip._id
       })
       //send the response to the riders
-      for (let i of updateTrip.riders) {
+      for (let i of onTripRiders) {
          //if the user's trip was not cancel
          if (i.rider_id !== payload.rider_id && i.status !== "cancel") {
             //if the user is online
             if (socketUser.online[i.rider_id]) {
+               // console.log('Sent response to', i.rider_id)
                helpers.outputResponse(ws, {
                   ...pendingData,
                   action: requestAction.newRideJoin
                }, socketUser.online[i.rider_id])
             } else {
-               console.log('Rider not online', i.rider_id)
+               // console.log('Rider not online', i.rider_id)
             }
          } else {
-            console.log('No Ride to send the response')
+            // console.log('No Ride to send the response')
          }
       }
       //send the response to the last rider
       if (socketUser.online[payload.rider_id]) {
          helpers.outputResponse(ws, sendData, socketUser.online[payload.rider_id])
-         //also send to other riders
-         // for (let i of updateTrip.riders) {
-         //    if (i.rider_id !== payload.rider_id && i.status !== 'cancel') {
-         //       if (socketUser.online[i.rider_id]) {
-         //          helpers.outputResponse(ws, { ...pendingData, action: requestAction.newRideJoin }, socketUser.online[i.rider_id])
-         //       } else {
-         //          console.log('Rider not online', i.rider_id)
-         //       }
-         //    }
-         // }
-         // if (socketUser.online[oldGuy[0].rider_id]) {
-         //    helpers.outputResponse(ws, { ...pendingData, action: requestAction.newRideJoin }, socketUser.online[oldGuy[0].rider_id])
-         // } else {
-         //    console.log('Rider not online', i.rider_id)
-         // }
       }
    }
 }
@@ -301,7 +291,11 @@ driverMethod.AcceptClassC = async (ws, payload, pendingData) => {
          return helpers.outputResponse(ws, { action: requestAction.serverError })
       }
 
-      //send response to the user (rider) that a driver accepts the request
+      //delete the request from pending requests
+      delete socketUser.pendingTrip[payload.rider_id]
+      //get all the riders who are still on trip
+      let onTripRiders = updateTrip.riders.filter(d => d.status !== "cancel")
+
       let sendData = {
          ...payload,
          car_plate_number: updateDriver.car_plate_number,
@@ -314,29 +308,35 @@ driverMethod.AcceptClassC = async (ws, payload, pendingData) => {
          trip_id: updateTrip._id,
          driver_id: driverId,
       }
-
-      //delete the request from pending requests
-      delete socketUser.pendingTrip[payload.rider_id]
-      //send the response to the user
-      if (socketUser.online[payload.rider_id]) {
-         helpers.outputResponse(ws, sendData, socketUser.online[payload.rider_id])
-         //also send to other riders
-         for (let i of sendData.riders) {
-            if (i.rider_id !== pendingData.rider_id && i.status !== 'cancel') {
-               if (socketUser.online[i.rider_id]) {
-                  helpers.outputResponse(ws, { ...pendingData, action: requestAction.newRideJoin }, socketUser.online[i.rider_id])
-               }
-            }
-         }
-      }
       //send the response to the driver
-      let sendData1 = {
+      helpers.outputResponse(ws, {
          action: requestAction.tripRequestAvailabe,
-         class: "C", rider: pendingData.rider,
+         class: "C", rider: onTripRiders.length,
          rider_id: payload.rider_id,
          trip_id: updateTrip._id
+      })
+      //send the response to the riders
+      for (let i of onTripRiders) {
+         //if the user's trip was not cancel
+         if (i.rider_id !== payload.rider_id && i.status !== "cancel") {
+            //if the user is online
+            if (socketUser.online[i.rider_id]) {
+               // console.log('Sent response to', i.rider_id)
+               helpers.outputResponse(ws, {
+                  ...pendingData,
+                  action: requestAction.newRideJoin
+               }, socketUser.online[i.rider_id])
+            } else {
+               // console.log('Rider not online', i.rider_id)
+            }
+         } else {
+            // console.log('No Ride to send the response')
+         }
       }
-      helpers.outputResponse(ws, sendData1)
+      //send the response to the last rider
+      if (socketUser.online[payload.rider_id]) {
+         helpers.outputResponse(ws, sendData, socketUser.online[payload.rider_id])
+      }
    }
 }
 
@@ -414,7 +414,11 @@ driverMethod.AcceptClassD = async (ws, payload, pendingData) => {
          return helpers.outputResponse(ws, { action: requestAction.serverError })
       }
 
-      //send response to the user (rider) that a driver accepts the request
+      //delete the request from pending requests
+      delete socketUser.pendingTrip[payload.rider_id]
+      //get all the riders who are still on trip
+      let onTripRiders = updateTrip.riders.filter(d => d.status !== "cancel")
+
       let sendData = {
          ...payload,
          car_plate_number: updateDriver.car_plate_number,
@@ -427,29 +431,35 @@ driverMethod.AcceptClassD = async (ws, payload, pendingData) => {
          trip_id: updateTrip._id,
          driver_id: driverId,
       }
-
-      //delete the request from pending requests
-      delete socketUser.pendingTrip[payload.rider_id]
-      //send the response to the user
-      if (socketUser.online[payload.rider_id]) {
-         helpers.outputResponse(ws, sendData, socketUser.online[payload.rider_id])
-         //also send to other riders
-         for (let i of sendData.riders) {
-            if (i.rider_id !== pendingData.rider_id && i.status !== 'cancel') {
-               if (socketUser.online[i.rider_id]) {
-                  helpers.outputResponse(ws, { ...pendingData, action: requestAction.newRideJoin }, socketUser.online[i.rider_id])
-               }
-            }
-         }
-      }
       //send the response to the driver
-      let sendData1 = {
+      helpers.outputResponse(ws, {
          action: requestAction.tripRequestAvailabe,
-         class: "D", rider: pendingData.rider,
+         class: "D", rider: onTripRiders.length,
          rider_id: payload.rider_id,
          trip_id: updateTrip._id
+      })
+      //send the response to the riders
+      for (let i of onTripRiders) {
+         //if the user's trip was not cancel
+         if (i.rider_id !== payload.rider_id && i.status !== "cancel") {
+            //if the user is online
+            if (socketUser.online[i.rider_id]) {
+               // console.log('Sent response to', i.rider_id)
+               helpers.outputResponse(ws, {
+                  ...pendingData,
+                  action: requestAction.newRideJoin
+               }, socketUser.online[i.rider_id])
+            } else {
+               // console.log('Rider not online', i.rider_id)
+            }
+         } else {
+            // console.log('No Ride to send the response')
+         }
       }
-      helpers.outputResponse(ws, sendData1)
+      //send the response to the last rider
+      if (socketUser.online[payload.rider_id]) {
+         helpers.outputResponse(ws, sendData, socketUser.online[payload.rider_id])
+      }
    }
 }
 
