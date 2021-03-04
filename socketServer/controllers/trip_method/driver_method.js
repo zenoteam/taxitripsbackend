@@ -29,9 +29,11 @@ const getRiderData = (payload, pendingData) => {
       end_trip_at: '',
       waiting_time: 0,
       end_time: 0,
+      delay_time: 0,
       total_distance: 0,
       status: "request_accepted",
       cancel_reason: {},
+      previous_destination: [],
       fare: 0,
    }
 }

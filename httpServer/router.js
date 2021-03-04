@@ -1,6 +1,6 @@
-const router = {}
 const auth = require('./auth')
 const helpers = require('./assets/helpers');
+const router = {}
 
 router.use = (req, res, urlPath) => {
    let url = urlPath.replace(/^\/+|\/+$/gi, ''); //sanitize the url

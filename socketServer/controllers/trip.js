@@ -274,6 +274,94 @@ trip.endTrip = (ws, payload) => {
    driverMethod.EndRide(ws, payload)
 }
 
+//for destination update for class A
+trip.updateDestination = async (ws, payload) => {
+   let trip_id = helpers.getInputValueString(payload, 'trip_id')
+   let endAddr = helpers.getInputValueString(payload, 'end_address')
+   let endLon = helpers.getInputValueNumber(payload, 'end_lon')
+   let endLat = helpers.getInputValueNumber(payload, 'end_lat')
+   let rideClass = helpers.getInputValueString(payload, 'class')
+
+   //check the values
+   if (!endLon || isNaN(endLon)) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid end longitude is required" })
+   }
+   //check the values
+   if (!endLat || isNaN(endLat)) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid end latitude is required" })
+   }
+   //check address
+   if (!endAddr || endAddr.length < 2) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid address is required" })
+   }
+   if (!rideClass) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Ride class is required" })
+   }
+   if (rideClass !== "A") {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: `Feature not allowed for ${rideClass}. This is only allowed for class A` })
+   }
+   //check the trip id
+   if (!trip_id || trip_id.length !== 24) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid trip id is required" })
+   }
+   //check the trip ID
+   let getTrip = await tripModel.TripRequests.findOne({ _id: trip_id }).catch(e => ({ error: e }))
+   //check if there's an error
+   if (getTrip && getTrip.error) {
+      return helpers.outputResponse(ws, { action: requestAction.serverError })
+   }
+   //check if not trip found
+   if (!getTrip) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Trip not found" })
+   }
+   let riderData = ws._user_data
+   let getRider = getTrip.riders[0]
+   //check if the details not correct
+   if (getRider.rider_id !== riderData.token) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "User not found in the trip" })
+   }
+
+   let oldDest = {
+      start_lon: getRider.start_lon,
+      start_lat: getRider.start_lat,
+      end_lon: getRider.end_lon,
+      end_lat: getRider.end_lat,
+      start_address: getRider.start_address,
+      end_address: getRider.end_address,
+   }
+
+   //update the distination
+   let updateDest = await tripModel.TripRequests.findOneAndUpdate({ _id: trip_id }, {
+      end_lon: endLon,
+      end_lat: endLat,
+      end_address: endAddr,
+      $push: { previous_destination: oldDest },
+   }, { new: true }).catch(e => ({ error: e }))
+
+   //if error
+   if (updateDest && updateDest.error) {
+      return helpers.outputResponse(ws, { action: requestAction.serverError })
+   }
+   //if not updated
+   if (!updateDest) {
+      helpers.outputResponse(ws, { action: requestAction.inputError, error: "Destination could not be updated" })
+   }
+
+   //if updated successfully, send response to driver 
+   if (socketUser.online[getTrip.driver_id]) {
+      helpers.outputResponse(ws, {
+         ...payload,
+         action: requestAction.tripDestinationUpdated,
+         rider_id: riderData.token,
+      }, socketUser.online[getTrip.driver_id])
+   }
+   //and reply the user
+   helpers.outputResponse(ws, {
+      rider_id: riderData.token,
+      action: requestAction.tripDestinationUpdatedSuccessfully,
+   })
+}
+
 //for canceling a trip
 trip.cancelRequest = async (ws, payload) => {
    let rider_id = helpers.getInputValueString(payload, 'rider_id')
