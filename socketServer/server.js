@@ -90,21 +90,18 @@ socket.createServer = (httpServer) => {
          let userData = ws._user_data // this will return the user data added to the ws obj.
          console.log('disconnnected', userData.token)
 
+         delete socketUsers.online[userData.token]
          // if the user is a driver
          if (userData.user_type === 'driver') {
             //take a sleep for 10sec and wait
             await socket.takeASleep(10000)
             //if not reconnected
             if (!socketUsers.online[userData.token]) {
-               delete socketUsers.online[userData.token]
                //update the driver to off
                await driverModel.findOneAndUpdate({ user_id: userData.token },
                   { online: false, }, { new: true }).catch(e => ({ error: e }))
             }
             //other things below
-         } else {
-            // we can go aheaded to delete the user and update database if neeed be
-            delete socketUsers.online[userData.token]
          }
       })
    })
