@@ -1,6 +1,7 @@
 const io = require('socket.io')
 const request = require('request')
 const socketUsers = require('./assets/socketUser')
+const driverModel = require('../models/driver');
 const router = require('./router')
 const socket = {}
 
@@ -18,18 +19,18 @@ socket.createServer = (httpServer) => {
       let userToken = query.token ? query.token : null
       let userType = query.user_type ? query.user_type : null
 
-      // if (!userToken || userToken.length !== 30) {
-      //    return next(new Error('Unauthorized'));
-      // }
-      // //if the usertype is not valid
-      // if (['driver', 'user'].indexOf(userType) === -1) {
-      //    return next(new Error('Unauthorized'));
-      // }
-      // ws._user_data = {
-      //    token: userToken,
-      //    user_type: userType
-      // }
-      // return next()
+      if (!userToken || userToken.length !== 30) {
+         return next(new Error('Unauthorized'));
+      }
+      //if the usertype is not valid
+      if (['driver', 'user'].indexOf(userType) === -1) {
+         return next(new Error('Unauthorized'));
+      }
+      ws._user_data = {
+         token: userToken,
+         user_type: userType
+      }
+      return next()
 
       // console.log(query)
       //if there's no token or the token is invalid, terminate the connection
@@ -82,7 +83,7 @@ socket.createServer = (httpServer) => {
 
 
       //create a listener to detect when the connected device disconnect from the socket
-      ws.on("disconnect", () => {
+      ws.on("disconnect", async () => {
          //here we remove the device from online users and update the database according if necessary
          // but before doing that, we have to wait for some seconds or minutes. A number of things could disconnect a device
          // it could incoming call, bad network, app closure etc. So to avoid querying database now and then, we wait for reconnection.
@@ -91,7 +92,15 @@ socket.createServer = (httpServer) => {
 
          // if the user is a driver
          if (userData.user_type === 'driver') {
-            delete socketUsers.online[userData.token]
+            //take a sleep for 10sec and wait
+            await socket.takeASleep(10000)
+            //if not reconnected
+            if (!socketUsers.online[userData.token]) {
+               delete socketUsers.online[userData.token]
+               //update the driver to off
+               await driverModel.findOneAndUpdate({ user_id: userData.token },
+                  { online: false, }, { new: true }).catch(e => ({ error: e }))
+            }
             //other things below
          } else {
             // we can go aheaded to delete the user and update database if neeed be
