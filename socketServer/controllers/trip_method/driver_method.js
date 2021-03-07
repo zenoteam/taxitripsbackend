@@ -133,6 +133,7 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
          class: "B",
          action: requestAction.driverAcceptRequest,
          rider: 1,
+         riders: saveTrip.riders,
          driver_id: driverId,
          trip_id: saveTrip._id
       }
@@ -203,7 +204,8 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
                // console.log('Sent response to', i.rider_id)
                helpers.outputResponse(ws, {
                   ...pendingData,
-                  action: requestAction.newRideJoin
+                  action: requestAction.newRideJoin,
+                  riders: onTripRiders,
                }, socketUser.online[i.rider_id])
             } else {
                // console.log('Rider not online', i.rider_id)
@@ -261,6 +263,7 @@ driverMethod.AcceptClassC = async (ws, payload, pendingData) => {
          class: "C",
          action: requestAction.driverAcceptRequest,
          rider: 1,
+         riders: saveTrip.riders,
          driver_id: driverId,
          trip_id: saveTrip._id
       }
@@ -306,7 +309,7 @@ driverMethod.AcceptClassC = async (ws, payload, pendingData) => {
          class: "C",
          action: requestAction.driverAcceptRequest,
          rider: payload.rider,
-         riders: updateTrip.riders,
+         riders: onTripRiders,
          trip_id: updateTrip._id,
          driver_id: driverId,
       }
@@ -326,6 +329,7 @@ driverMethod.AcceptClassC = async (ws, payload, pendingData) => {
                // console.log('Sent response to', i.rider_id)
                helpers.outputResponse(ws, {
                   ...pendingData,
+                  riders: onTripRiders,
                   action: requestAction.newRideJoin
                }, socketUser.online[i.rider_id])
             } else {
@@ -384,6 +388,7 @@ driverMethod.AcceptClassD = async (ws, payload, pendingData) => {
          class: "D",
          action: requestAction.driverAcceptRequest,
          rider: 1,
+         riders: saveTrip.riders,
          driver_id: driverId,
          trip_id: saveTrip._id
       }
@@ -429,7 +434,7 @@ driverMethod.AcceptClassD = async (ws, payload, pendingData) => {
          class: "D",
          action: requestAction.driverAcceptRequest,
          rider: payload.rider,
-         riders: updateTrip.riders,
+         riders: onTripRiders,
          trip_id: updateTrip._id,
          driver_id: driverId,
       }
@@ -449,6 +454,7 @@ driverMethod.AcceptClassD = async (ws, payload, pendingData) => {
                // console.log('Sent response to', i.rider_id)
                helpers.outputResponse(ws, {
                   ...pendingData,
+                  riders: onTripRiders,
                   action: requestAction.newRideJoin
                }, socketUser.online[i.rider_id])
             } else {

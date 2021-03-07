@@ -5,6 +5,7 @@ const tripRidersMethod = require('./trip_method/rider_method')
 const socketUser = require('../assets/socketUser')
 const driverMethod = require('./trip_method/driver_method')
 const tripModel = require('../../models/trip_request')
+// const notificationModel = require('../../models/notification')
 
 const trip = {}
 

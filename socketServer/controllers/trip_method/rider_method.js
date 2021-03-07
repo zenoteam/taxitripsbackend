@@ -64,7 +64,6 @@ const requestDriverWaitFor30Sec = (rider_id, ws) => {
                }
             }
          }
-
          //do a new request
          riderMethod['RequestClass' + riderClass](ws, socketUser.pendingTrip[rider_id], getallDrivers)
       }

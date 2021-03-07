@@ -18,20 +18,20 @@ socket.createServer = (httpServer) => {
       let userToken = query.token ? query.token : null
       let userType = query.user_type ? query.user_type : null
 
-      if (!userToken || userToken.length !== 30) {
-         return next(new Error('Unauthorized'));
-      }
-      //if the usertype is not valid
-      if (['driver', 'user'].indexOf(userType) === -1) {
-         return next(new Error('Unauthorized'));
-      }
-      ws._user_data = {
-         token: userToken,
-         user_type: userType
-      }
-      return next()
+      // if (!userToken || userToken.length !== 30) {
+      //    return next(new Error('Unauthorized'));
+      // }
+      // //if the usertype is not valid
+      // if (['driver', 'user'].indexOf(userType) === -1) {
+      //    return next(new Error('Unauthorized'));
+      // }
+      // ws._user_data = {
+      //    token: userToken,
+      //    user_type: userType
+      // }
+      // return next()
 
-
+      // console.log(query)
       //if there's no token or the token is invalid, terminate the connection
       if (!userToken || userToken.indexOf('Bearer') === -1) {
          return next(new Error('Unauthorized'));
@@ -42,7 +42,7 @@ socket.createServer = (httpServer) => {
       }
       //check the token with the auth service
       let checkToken = await socket.verifyBearerToken(userToken)
-
+      // console.log(checkToken)
       //if the token is invalid
       try {
          //parse the response if not object
@@ -52,7 +52,7 @@ socket.createServer = (httpServer) => {
          }
          //add the user data to the obj
          ws._user_data = {
-            token: `A${checkToken.id}`,
+            token: `A${checkToken.auth_id}`,
             user_type: userType
          }
 
