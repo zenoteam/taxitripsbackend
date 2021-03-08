@@ -24,6 +24,7 @@ trip.requestDriver = (ws, payload) => {
    let est_fare = helpers.getInputValueString(payload, 'est_fare')
    let est_time = helpers.getInputValueNumber(payload, 'est_time')
    let rideClass = helpers.getInputValueString(payload, 'class')
+   let ARD = helpers.getInputValueString(payload, 'accept_recommendation')
 
    //check and validate the input
    if (isNaN(startLongitude) || isNaN(startLatitude)) {
@@ -71,15 +72,15 @@ trip.requestDriver = (ws, payload) => {
    // do the trip request switch
    switch (rideClass) {
       case "A":
-         tripRidersMethod.RequestClassA(ws, payload);
+         tripRidersMethod.RequestClassA(ws, payload, [], ARD === "yes" ? true : ARD === "no" ? false : undefined);
          break;
       case "B":
-         tripRidersMethod.RequestClassB(ws, payload);
+         tripRidersMethod.RequestClassB(ws, payload, [], ARD === "yes" ? true : ARD === "no" ? false : undefined);
          break;
       case "C":
-         tripRidersMethod.RequestClassC(ws, payload);
+         tripRidersMethod.RequestClassC(ws, payload, [], ARD === "yes" ? true : ARD === "no" ? false : undefined);
       case "D":
-         tripRidersMethod.RequestClassD(ws, payload);
+         tripRidersMethod.RequestClassD(ws, payload, [], ARD === "yes" ? true : ARD === "no" ? false : undefined);
          break;
       default:
          helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid request" })

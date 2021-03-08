@@ -381,7 +381,7 @@ riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = [], accept
                'location.destination.coordinates': {
                   $geoWithin: { $centerSphere: [[payload.end_lon, payload.end_lat], 1 / 6371] }
                },
-               ride_status: 'waiting', ride_class: { $in: ['B', 'C'] }, driver_id: { $nin: driversDidNotAccept }
+               ride_status: 'waiting', ride_class: { $in: ['C', 'B'] }, driver_id: { $nin: driversDidNotAccept }
             }
          },
          { $sort: { ride_class: -1 } },
@@ -556,7 +556,7 @@ riderMethod.RequestClassD = async (ws, payload, driversDidNotAccept = [], accept
                'location.destination.coordinates': {
                   $geoWithin: { $centerSphere: [[payload.end_lon, payload.end_lat], 1 / 6371] }
                },
-               ride_status: 'waiting', ride_class: { $in: ['B', 'C', 'D'] }, driver_id: { $nin: driversDidNotAccept }
+               ride_status: 'waiting', ride_class: { $in: ['D', 'C', 'B'] }, driver_id: { $nin: driversDidNotAccept }
             }
          },
          { $sort: { ride_class: -1 } },
