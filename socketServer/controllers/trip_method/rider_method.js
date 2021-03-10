@@ -46,21 +46,23 @@ const requestDriverWaitFor30Sec = (rider_id, ws) => {
       } else {
          //if the driver data does not exist
          if (!socketUser.pendingTrip[rider_id]) return
+         //get the pending Data
+         let pdData = socketUser.pendingTrip[rider_id]
          //get all the drivers that did not response to the request
-         let getallDrivers = socketUser.pendingTrip[rider_id].driver
-         let riderClass = socketUser.pendingTrip[rider_id].class
+         let getallDrivers = pdData.driver
+         let riderClass = pdData.class
          //send cancel ride to the drivers
          if (socketUser.pendingTrip[rider_id] &&
             socketUser.pendingTrip[rider_id].driver &&
             socketUser.pendingTrip[rider_id].driver.length
          ) {
             //run a loop
-            for (let i of socketUser.pendingTrip[rider_id].driver) {
+            for (let i of pdData.driver) {
                //if the driver's phone is reachable
                if (socketUser.online[i]) {
                   helpers.outputResponse(ws, {
                      action: requestAction.tripRequestCanceled,
-                     request_type: socketUser.pendingTrip[rider_id].action,
+                     request_type: pdData.action,
                      rider_id
                   }, socketUser.online[i])
                }
@@ -81,6 +83,8 @@ const requestDriverWaitFor30Sec = (rider_id, ws) => {
 
 //function that handles class A ride request
 riderMethod.RequestClassA = async (ws, payload, driversDidNotAccept = [], acceptRideRecommended = undefined) => {
+   //check if there's no payload, return
+   if (!payload || payload.class) return
    //find a free driver withing the location
    // console.log(payload)
    let getDriver = await driverModel.aggregate([
@@ -186,6 +190,8 @@ riderMethod.RequestClassA = async (ws, payload, driversDidNotAccept = [], accept
 
 // function that handles class B request
 riderMethod.RequestClassB = async (ws, payload, driversDidNotAccept = [], acceptRideRecommended = undefined) => {
+   //check if there's no payload, return
+   if (!payload || payload.class) return
    //add the distance to the payload
    payload.distance = getGeometryDistanceKM(
       {
@@ -359,6 +365,8 @@ riderMethod.RequestClassB = async (ws, payload, driversDidNotAccept = [], accept
 
 // function that handles class C request
 riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = [], acceptRideRecommended = undefined) => {
+   //check if there's no payload, return
+   if (!payload || payload.class) return
    //add the distance to the payload
    payload.distance = getGeometryDistanceKM(
       {
@@ -534,6 +542,8 @@ riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = [], accept
 
 // function that handles class B request
 riderMethod.RequestClassD = async (ws, payload, driversDidNotAccept = [], acceptRideRecommended = undefined) => {
+   //check if there's no payload, return
+   if (!payload || payload.class) return
    //add the distance to the payload
    payload.distance = getGeometryDistanceKM(
       {
