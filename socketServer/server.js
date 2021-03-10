@@ -43,7 +43,7 @@ socket.createServer = (httpServer) => {
       }
       //check the token with the auth service
       let checkToken = await socket.verifyBearerToken(userToken)
-      // console.log(checkToken)
+      console.log(checkToken)
       //if the token is invalid
       try {
          //parse the response if not object

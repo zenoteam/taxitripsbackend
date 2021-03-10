@@ -44,6 +44,8 @@ const requestDriverWaitFor30Sec = (rider_id, ws) => {
          //delete the pending request
          delete socketUser.pendingTrip[rider_id]
       } else {
+         //if the driver data does not exist
+         if (!socketUser.pendingTrip[rider_id]) return
          //get all the drivers that did not response to the request
          let getallDrivers = socketUser.pendingTrip[rider_id].driver
          let riderClass = socketUser.pendingTrip[rider_id].class
