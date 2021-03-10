@@ -84,7 +84,7 @@ const requestDriverWaitFor30Sec = (rider_id, ws) => {
 //function that handles class A ride request
 riderMethod.RequestClassA = async (ws, payload, driversDidNotAccept = [], acceptRideRecommended = undefined) => {
    //check if there's no payload, return
-   if (!payload || payload.class) return
+   if (!payload || !payload.class) return helpers.outputResponse({ error: "payload missing" })
    //find a free driver withing the location
    // console.log(payload)
    let getDriver = await driverModel.aggregate([
@@ -191,7 +191,7 @@ riderMethod.RequestClassA = async (ws, payload, driversDidNotAccept = [], accept
 // function that handles class B request
 riderMethod.RequestClassB = async (ws, payload, driversDidNotAccept = [], acceptRideRecommended = undefined) => {
    //check if there's no payload, return
-   if (!payload || payload.class) return
+   if (!payload || !payload.class) return helpers.outputResponse({ error: "payload missing" })
    //add the distance to the payload
    payload.distance = getGeometryDistanceKM(
       {
@@ -366,7 +366,7 @@ riderMethod.RequestClassB = async (ws, payload, driversDidNotAccept = [], accept
 // function that handles class C request
 riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = [], acceptRideRecommended = undefined) => {
    //check if there's no payload, return
-   if (!payload || payload.class) return
+   if (!payload || !payload.class) return helpers.outputResponse({ error: "payload missing" })
    //add the distance to the payload
    payload.distance = getGeometryDistanceKM(
       {
@@ -543,7 +543,7 @@ riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = [], accept
 // function that handles class B request
 riderMethod.RequestClassD = async (ws, payload, driversDidNotAccept = [], acceptRideRecommended = undefined) => {
    //check if there's no payload, return
-   if (!payload || payload.class) return
+   if (!payload || !payload.class) return helpers.outputResponse({ error: "payload missing" })
    //add the distance to the payload
    payload.distance = getGeometryDistanceKM(
       {
