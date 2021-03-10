@@ -68,6 +68,7 @@ const requestDriverWaitFor30Sec = (rider_id, ws) => {
                }
             }
          }
+
          //do a new request
          riderMethod['RequestClass' + riderClass](ws, socketUser.pendingTrip[rider_id], getallDrivers)
       }
@@ -366,6 +367,7 @@ riderMethod.RequestClassB = async (ws, payload, driversDidNotAccept = [], accept
 // function that handles class C request
 riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = [], acceptRideRecommended = undefined) => {
    //check if there's no payload, return
+   // console.log('New request', driversDidNotAccept)
    if (!payload || !payload.class) return helpers.outputResponse({ error: "payload missing" })
    //add the distance to the payload
    payload.distance = getGeometryDistanceKM(
@@ -497,15 +499,15 @@ riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = [], accept
          //the driver data
          let driverData = getDriver[0]
          //add the distance to the payload
-         payload.distance = getGeometryDistanceKM(
-            {
-               latitude: payload.start_lat,
-               longitude: payload.start_lon
-            },
-            {
-               latitude: payload.end_lat,
-               longitude: payload.end_lon
-            })
+         // payload.distance = getGeometryDistanceKM(
+         //    {
+         //       latitude: payload.start_lat,
+         //       longitude: payload.start_lon
+         //    },
+         //    {
+         //       latitude: payload.end_lat,
+         //       longitude: payload.end_lon
+         //    })
          //add the rider position
          payload.rider = 1
          payload.rider_id = riderData.token //add the rider id
@@ -673,16 +675,6 @@ riderMethod.RequestClassD = async (ws, payload, driversDidNotAccept = [], accept
       if (getDriver && getDriver.length > 0) {
          //the driver data
          let driverData = getDriver[0]
-         //add the distance to the payload
-         payload.distance = getGeometryDistanceKM(
-            {
-               latitude: payload.start_lat,
-               longitude: payload.start_lon
-            },
-            {
-               latitude: payload.end_lat,
-               longitude: payload.end_lon
-            })
          //add the rider position
          payload.rider = 1
          payload.rider_id = riderData.token //add the rider id

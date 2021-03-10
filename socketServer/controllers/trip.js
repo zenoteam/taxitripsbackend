@@ -79,6 +79,7 @@ trip.requestDriver = (ws, payload) => {
          break;
       case "C":
          tripRidersMethod.RequestClassC(ws, payload, [], ARD === "yes" ? true : ARD === "no" ? false : undefined);
+         break;
       case "D":
          tripRidersMethod.RequestClassD(ws, payload, [], ARD === "yes" ? true : ARD === "no" ? false : undefined);
          break;
@@ -142,7 +143,8 @@ trip.acceptRequest = (ws, payload) => {
                driverMethod.AcceptClassB(ws, payload, rData)
                break;
             case "C":
-               driverMethod.AcceptClassC(ws, payload, rData)
+               driverMethod.AcceptClassC(ws, payload, rData);
+               break;
             case "D":
                driverMethod.AcceptClassD(ws, payload, rData)
                break;

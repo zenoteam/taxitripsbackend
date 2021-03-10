@@ -49,11 +49,11 @@ socket.createServer = (httpServer) => {
          //parse the response if not object
          checkToken = typeof checkToken === 'object' ? checkToken : JSON.parse(checkToken)
          if (!checkToken || !/^\d+$/.test(checkToken.id)) {
-            return next(new Error('Unauthorized'));
+            return next(new Error("token_expired"));
          }
          //add the user data to the obj
          ws._user_data = {
-            token: `A${checkToken.auth_id}`,
+            token: `${checkToken.auth_id}`,
             user_type: userType
          }
 
