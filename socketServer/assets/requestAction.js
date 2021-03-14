@@ -13,6 +13,8 @@ module.exports = {
    driverStartTripSuccess: "driver_start_trip_success",
    driverStatusSet: "driver_status_set_success",
    driverGoingToPickUpLocation: "driver_going_to_pick_up_location",
+   driverPickedRider: "driver_picked_rider",
+   driverOnHisWay: "driver_on_his_way",
    driverEndRide: "driver_end_ride",
    driverEndRideSuccessfully: "ride_ended_successfully",
    ratingSubmittedSuccessfully: "user_rating_submitted_successfully",

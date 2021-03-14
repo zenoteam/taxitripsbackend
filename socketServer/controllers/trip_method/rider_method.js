@@ -83,7 +83,7 @@ const requestDriverWaitFor30Sec = (rider_id, ws) => {
 
 
 //function that handles class A ride request
-riderMethod.RequestClassA = async (ws, payload, driversDidNotAccept = [], acceptRideRecommended = undefined) => {
+riderMethod.RequestClassA = async (ws, payload, driversDidNotAccept = []) => {
    //check if there's no payload, return
    if (!payload || !payload.class) return helpers.outputResponse({ error: "payload missing" })
    //find a free driver withing the location
@@ -148,7 +148,7 @@ riderMethod.RequestClassA = async (ws, payload, driversDidNotAccept = [], accept
       }
    } else {
       // if the user does not accept a ride recommendation, send the user no driver available
-      if (acceptRideRecommended === false) {
+      if (payload.accept_recommendation === "no") {
          //delete pending trip data id if any
          delete socketUser.pendingTrip[riderData.token]
          return helpers.outputResponse(ws, { action: requestAction.driverNotFound, request_type: payload.action })
@@ -190,7 +190,7 @@ riderMethod.RequestClassA = async (ws, payload, driversDidNotAccept = [], accept
 }
 
 // function that handles class B request
-riderMethod.RequestClassB = async (ws, payload, driversDidNotAccept = [], acceptRideRecommended = undefined) => {
+riderMethod.RequestClassB = async (ws, payload, driversDidNotAccept = []) => {
    //check if there's no payload, return
    if (!payload || !payload.class) return helpers.outputResponse({ error: "payload missing" })
    //add the distance to the payload
@@ -207,7 +207,7 @@ riderMethod.RequestClassB = async (ws, payload, driversDidNotAccept = [], accept
    let riderData = ws._user_data
    let getPendingTrip = [];
    //for a fresh request without ride recommendation
-   if (acceptRideRecommended === undefined) {
+   if (!payload.accept_recommendation) {
       //find any pending request of class B or C
       getPendingTrip = await TripModel.TripRequests.aggregate([
          {
@@ -224,7 +224,7 @@ riderMethod.RequestClassB = async (ws, payload, driversDidNotAccept = [], accept
          { $sort: { ride_class: 1 } },
          { $limit: 1 }
       ])
-   } else if (acceptRideRecommended === true) {
+   } else if (payload.accept_recommendation === "yes") {
       //if the user accept a ride recommendation, find the ride and proceed
       //check if there's no trip id from the request
       if (!payload.trip_id || payload.trip_id.length !== 24) {
@@ -277,7 +277,7 @@ riderMethod.RequestClassB = async (ws, payload, driversDidNotAccept = [], accept
          } else {
             //if the driver's phone not reachable,
             //if it's a trip recommendation, tell the user the driver is not available
-            if (acceptRideRecommended === true) {
+            if (payload.accept_recommendation === "yes") {
                delete socketUser.pendingTrip[riderData.token] //remove any pending data is available
                helpers.outputResponse(ws, { action: requestAction.driverNotOnline, request_type: requestAction.rideRecommendation })
             } else {
@@ -365,7 +365,7 @@ riderMethod.RequestClassB = async (ws, payload, driversDidNotAccept = [], accept
 }
 
 // function that handles class C request
-riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = [], acceptRideRecommended = undefined) => {
+riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = []) => {
    //check if there's no payload, return
    // console.log('New request', driversDidNotAccept)
    if (!payload || !payload.class) return helpers.outputResponse({ error: "payload missing" })
@@ -382,7 +382,7 @@ riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = [], accept
    let getPendingTrip = [];
    //get the requestor data
    let riderData = ws._user_data
-   if (acceptRideRecommended === undefined) {
+   if (!payload.accept_recommendation) {
       //find any pending request of class B or C
       getPendingTrip = await TripModel.TripRequests.aggregate([
          {
@@ -399,7 +399,7 @@ riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = [], accept
          { $sort: { ride_class: -1 } },
          { $limit: 1 }
       ])
-   } else if (acceptRideRecommended === true) {
+   } else if (payload.accept_recommendation === "yes") {
       //if the user accept a ride recommendation, find the ride and proceed
       //check if there's no trip id from the request
       if (!payload.trip_id || payload.trip_id.length !== 24) {
@@ -454,7 +454,7 @@ riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = [], accept
          } else {
             //if the driver's phone not reachable,
             //if it's a trip recommendation, tell the user the driver is not available
-            if (acceptRideRecommended === true) {
+            if (payload.accept_recommendation === "yes") {
                delete socketUser.pendingTrip[riderData.token] //remove any pending data is available
                helpers.outputResponse(ws, { action: requestAction.driverNotOnline, request_type: requestAction.rideRecommendation })
             } else {
@@ -498,16 +498,6 @@ riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = [], accept
       if (getDriver && getDriver.length > 0) {
          //the driver data
          let driverData = getDriver[0]
-         //add the distance to the payload
-         // payload.distance = getGeometryDistanceKM(
-         //    {
-         //       latitude: payload.start_lat,
-         //       longitude: payload.start_lon
-         //    },
-         //    {
-         //       latitude: payload.end_lat,
-         //       longitude: payload.end_lon
-         //    })
          //add the rider position
          payload.rider = 1
          payload.rider_id = riderData.token //add the rider id
@@ -543,7 +533,7 @@ riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = [], accept
 
 
 // function that handles class B request
-riderMethod.RequestClassD = async (ws, payload, driversDidNotAccept = [], acceptRideRecommended = undefined) => {
+riderMethod.RequestClassD = async (ws, payload, driversDidNotAccept = []) => {
    //check if there's no payload, return
    if (!payload || !payload.class) return helpers.outputResponse({ error: "payload missing" })
    //add the distance to the payload
@@ -559,7 +549,7 @@ riderMethod.RequestClassD = async (ws, payload, driversDidNotAccept = [], accept
    let getPendingTrip = [];
    //get the requestor data
    let riderData = ws._user_data
-   if (acceptRideRecommended === undefined) {
+   if (!payload.accept_recommendation) {
       //find any pending request of class B or C
       getPendingTrip = await TripModel.TripRequests.aggregate([
          {
@@ -576,7 +566,7 @@ riderMethod.RequestClassD = async (ws, payload, driversDidNotAccept = [], accept
          { $sort: { ride_class: -1 } },
          { $limit: 1 }
       ])
-   } else if (acceptRideRecommended === true) {
+   } else if (payload.accept_recommendation === "yes") {
       //if the user accept a ride recommendation, find the ride and proceed
       //check if there's no trip id from the request
       if (!payload.trip_id || payload.trip_id.length !== 24) {
@@ -631,7 +621,7 @@ riderMethod.RequestClassD = async (ws, payload, driversDidNotAccept = [], accept
          } else {
             //if the driver's phone not reachable,
             //if it's a trip recommendation, tell the user the driver is not available
-            if (acceptRideRecommended === true) {
+            if (payload.accept_recommendation === "yes") {
                delete socketUser.pendingTrip[riderData.token] //remove any pending data is available
                helpers.outputResponse(ws, { action: requestAction.driverNotOnline, request_type: requestAction.rideRecommendation })
             } else {

@@ -68,20 +68,19 @@ trip.requestDriver = (ws, payload) => {
    }
 
    payload.name = payload.name.split(" ")[0]
-
    // do the trip request switch
    switch (rideClass) {
       case "A":
-         tripRidersMethod.RequestClassA(ws, payload, [], ARD === "yes" ? true : ARD === "no" ? false : undefined);
+         tripRidersMethod.RequestClassA(ws, payload, []);
          break;
       case "B":
-         tripRidersMethod.RequestClassB(ws, payload, [], ARD === "yes" ? true : ARD === "no" ? false : undefined);
+         tripRidersMethod.RequestClassB(ws, payload, []);
          break;
       case "C":
-         tripRidersMethod.RequestClassC(ws, payload, [], ARD === "yes" ? true : ARD === "no" ? false : undefined);
+         tripRidersMethod.RequestClassC(ws, payload, []);
          break;
       case "D":
-         tripRidersMethod.RequestClassD(ws, payload, [], ARD === "yes" ? true : ARD === "no" ? false : undefined);
+         tripRidersMethod.RequestClassD(ws, payload, []);
          break;
       default:
          helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid request" })
@@ -208,6 +207,69 @@ trip.driverGoToPickUp = (ws, payload) => {
          }
       }
    }
+}
+
+//for driver that has picked a rider
+trip.driverPickedUpRider = (ws, payload) => {
+   let rider_id = helpers.getInputValueString(payload, 'rider_id')
+   let riders = helpers.getInputValueArray(payload, 'riders')
+
+   //if the rider is not submitted
+   if (!rider_id) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Rider ID is required" })
+   }
+
+   if (!(riders instanceof Array) || riders.length === 0) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Riders data is required" })
+   }
+   //send to the riders
+   for (let i of riders) {
+      if (i.status !== 'cancel') {
+         //if online
+         if (socketUser.online[i.rider_id]) {
+            helpers.outputResponse(ws, {
+               action: requestAction.driverPickedRider,
+               trip_id: i.trip_id, //trip id
+               rider_id: payload.rider_id // id of the person driver going to pick
+            }, socketUser.online[i.rider_id])
+         }
+      }
+   }
+}
+
+//for driver movement to pickup
+trip.driverOnAMove = (ws, payload) => {
+   let rider_id = helpers.getInputValueString(payload, 'rider_id')
+   let longitude = helpers.getInputValueNumber(payload, 'longitude')
+   let latitude = helpers.getInputValueNumber(payload, 'latitude')
+   let riders = helpers.getInputValueArray(payload, 'riders')
+
+   //if the rider is not submitted
+   if (!rider_id) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Rider ID is required" })
+   }
+   //if there's no valid longitude or latitude
+   if (!longitude || isNaN(longitude) || !latitude || isNaN(latitude)) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Valid longitude and latitude required" })
+   }
+   if (!(riders instanceof Array) || riders.length === 0) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Riders data is required" })
+   }
+   //send to the riders
+   for (let i of riders) {
+      if (i.status !== 'cancel') {
+         //if online
+         if (socketUser.online[i.rider_id]) {
+            helpers.outputResponse(ws, {
+               action: requestAction.driverOnHisWay,
+               trip_id: i.trip_id, //trip id
+               rider_id: payload.rider_id, // id of the person driver going to pick
+               longitude, latitude
+            }, socketUser.online[i.rider_id])
+         }
+      }
+   }
+
 }
 
 //for a driver to start trip
