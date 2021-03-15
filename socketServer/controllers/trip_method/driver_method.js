@@ -488,21 +488,24 @@ driverMethod.ArrivePickUp = async (ws, payload) => {
       return helpers.outputResponse(ws, { action: requestAction.serverError })
       //do somthing here
    }
-   //send the response to the rider (user)
-   // if (socketUser.online[payload.rider_id]) {
-   //    helpers.outputResponse(ws, { action: requestAction.driverArrivePickUp }, socketUser.online[payload.rider_id])
    //also send to other riders
    for (let i of updateData.riders) {
       if (i.status !== 'cancel') {
          if (socketUser.online[i.rider_id]) {
             helpers.outputResponse(ws, {
                rider_id: payload.rider_id,
+               arrive_time: arriveTime,
                action: requestAction.driverArrivePickUp
             }, socketUser.online[i.rider_id])
          }
       }
    }
-   // }
+   //reply the driver
+   helpers.outputResponse(ws, {
+      rider_id: payload.rider_id,
+      arrive_time: arriveTime,
+      action: requestAction.driverArrivePickUp
+   })
 }
 
 //when the driver start trip
