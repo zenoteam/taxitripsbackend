@@ -460,7 +460,7 @@ trip.delayRide = async (ws, payload) => {
 }
 
 //for a rider to accept a ride delay
-trip.AcceptDelayRide = async (ws, payload) => {
+trip.acceptDelayRide = async (ws, payload) => {
    let trip_id = helpers.getInputValueString(payload, 'trip_id')
    let driver_id = helpers.getInputValueString(payload, 'driver_id')
 
@@ -644,8 +644,5 @@ trip.getPendingTrip = async (ws, payload) => {
    }
    helpers.outputResponse(ws, { action: requestAction.pendingTrip, data: [getTrip] })
 }
-
-
-
 
 module.exports = trip;

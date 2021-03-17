@@ -39,6 +39,7 @@ const getRiderData = (payload, pendingData) => {
       cancel_reason: {},
       previous_destination: [],
       fare: 0,
+      action: requestAction.driverAcceptRequest
    }
 }
 
@@ -483,7 +484,7 @@ driverMethod.ArrivePickUp = async (ws, payload) => {
    if (["A", "B", "C", "D"].indexOf(rideClass) > -1) {
       //update the data to arrive pickup
       updateData = await tripModel.TripRequests.findOneAndUpdate({ _id: payload.trip_id, 'riders.rider_id': payload.rider_id },
-         { $set: { 'riders.$.status': 'arrive_pickup', 'riders.$.arrive_pickup_at': arriveTime, 'riders.$.statge': 1 } }, { new: true, lean: true }).catch(e => ({ error: e }))
+         { $set: { 'riders.$.action': requestAction.driverArrivePickUp, 'riders.$.status': 'arrive_pickup', 'riders.$.arrive_pickup_at': arriveTime, 'riders.$.statge': 1 } }, { new: true, lean: true }).catch(e => ({ error: e }))
    } else {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Unknown Class" })
    }
@@ -526,6 +527,7 @@ driverMethod.StartRide = async (ws, payload) => {
                'riders.0.stage': 3,
                'riders.0.start_trip_at': startTime,
                'riders.0.waiting_time': payload.riders[0].waiting_time,
+               'riders.0.action': requestAction.driverStartTripSuccess,
             }, ride_status: 'on_ride'
          }, { new: true }).catch(e => ({ error: e }))
    } else if (rideClass === "B") {
@@ -537,7 +539,7 @@ driverMethod.StartRide = async (ws, payload) => {
          {
             $set: {
                'riders.$[].status': 'picked', 'riders.$[].start_trip_at': startTime,
-               'riders.$[].stage': 3,
+               'riders.$[].stage': 3, 'riders.$[].action': requestAction.driverStartTripSuccess,
                'riders.$[first].waiting_time': payload.riders[0].waiting_time,
                'riders.$[second].waiting_time': payload.riders[1].waiting_time,
             },
@@ -561,7 +563,7 @@ driverMethod.StartRide = async (ws, payload) => {
          {
             $set: {
                'riders.$[].status': 'picked', 'riders.$[].start_trip_at': startTime,
-               'riders.$[].stage': 3,
+               'riders.$[].stage': 3, 'riders.$[].action': requestAction.driverStartTripSuccess,
                'riders.$[first].waiting_time': payload.riders[0].waiting_time,
                'riders.$[second].waiting_time': payload.riders[1].waiting_time,
                'riders.$[third].waiting_time': payload.riders[2].waiting_time,
@@ -586,7 +588,7 @@ driverMethod.StartRide = async (ws, payload) => {
          {
             $set: {
                'riders.$[].status': 'picked', 'riders.$[].start_trip_at': startTime,
-               'riders.$[].stage': 3,
+               'riders.$[].stage': 3, 'riders.$[].action': requestAction.driverStartTripSuccess,
                'riders.$[first].waiting_time': payload.riders[0].waiting_time,
                'riders.$[second].waiting_time': payload.riders[1].waiting_time,
                'riders.$[third].waiting_time': payload.riders[2].waiting_time,
@@ -697,7 +699,8 @@ driverMethod.EndRide = async (ws, payload) => {
                'riders.$.end_trip_at': endTime,
                'riders.$.end_time': totalTimeCovered,
                'riders.$.total_distance': totalDstCovered,
-               'riders.$.fare': totalFare
+               'riders.$.fare': totalFare,
+               'riders.$.action': requestAction.driverEndRide,
             },
             ride_status: rideClass === "A" ? "completed" :
                (rideClass === "B" && dropOffRiders.length === 1) ? "completed" :
@@ -793,6 +796,7 @@ driverMethod.CancelRide = async (ws, payload) => {
                {
                   'riders.$.status': 'cancel',
                   'riders.$.stage': 6,
+                  'riders.$.action': requestAction.tripRequestCanceled,
                   'riders.$.cancel_reason': cancelData,
                   'location.0.origin.coordinates': [newCompase.start_lon, newCompase.start_lat],
                   'location.0.destination.coordinates': [newCompase.end_lon, newCompase.end_lat],
@@ -801,6 +805,7 @@ driverMethod.CancelRide = async (ws, payload) => {
                {
                   'riders.$.status': 'cancel',
                   'riders.$.stage': 6,
+                  'riders.$.action': requestAction.tripRequestCanceled,
                   'riders.$.cancel_reason': cancelData,
                },
          },
