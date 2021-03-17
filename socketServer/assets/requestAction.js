@@ -19,8 +19,12 @@ module.exports = {
    driverEndRideSuccessfully: "ride_ended_successfully",
    ratingSubmittedSuccessfully: "user_rating_submitted_successfully",
    rideRecommendation: "recommending_another_ride_class",
+   delayRideRequest: "driver_asks_to_delay_ride",
+   continueDelayRideRequest: "driver_asks_to_continue_ride",
+   delayRideRequestAccepted: "delay_ride_accepted",
    newTripRequest: "new_trip_request",
    newRideJoin: "new_rider_join_trip",
+   pendingTrip: "pending_trip_request",
    inputError: "input_error",
    serverError: "server_error",
 }

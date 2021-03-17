@@ -15,7 +15,7 @@ const TripRequests = new Schema({
    },
    ride_status: {
       type: String,
-      enum: ["waiting", "on_ride", "completed", "cancel"],
+      enum: ["waiting", "on_ride", "completed", "cancel", "delay", "on_pickup"],
       required: true,
    },
    ride_class: {
