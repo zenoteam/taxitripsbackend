@@ -5,7 +5,7 @@ const tripRidersMethod = require('./trip_method/rider_method')
 const socketUser = require('../assets/socketUser')
 const driverMethod = require('./trip_method/driver_method')
 const tripModel = require('../../models/trip_request')
-// const notificationModel = require('../../models/notification')
+const dbConnector = require('../../models/dbconnector')
 
 const trip = {}
 
@@ -640,14 +640,10 @@ trip.getPendingTrip = async (ws, payload) => {
    //find the trip
    // let getTrip = await tripModel.TripRequests.findOne({ _id: trip_id }, { riders: 1, ride_status: 1, ride_class: 1 }).catch(e => ({ error: e }))
    let getTrip = await tripModel.TripRequests.aggregate([
-      {
-         $match: {
-            _id: trip_id
-         }
-      },
+      { $match: { _id: dbConnector.mongoose.Types.ObjectId(trip_id) } },
       {
          $lookup: {
-            from: "driver",
+            from: "drivers",
             localField: "driver_id",
             foreignField: "user_id",
             as: "driver_data"
