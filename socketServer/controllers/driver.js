@@ -41,15 +41,9 @@ driver.setOnlineStatusTem = async (ws, payload) => {
    let plateNo = helpers.getInputValueString(payload, 'plateNo')
    let driverId = ws._user_data.token
 
-   //check if not valid data
-   if (isNaN(lon) || isNaN(lat)) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid lat or lon is required" })
-   }
+
    if (['on', 'off'].indexOf(status) === -1) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid status" })
-   }
-   if (!validator.default.isEmail(email)) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid email" })
    }
    let updateStatus;
    if (status === 'off') {
@@ -57,6 +51,13 @@ driver.setOnlineStatusTem = async (ws, payload) => {
       updateStatus = await driverModel.findOneAndUpdate({ user_id: driverId },
          { online: false, }, { new: true }).catch(e => ({ error: e }))
    } else {
+      //check if not valid data
+      if (isNaN(lon) || isNaN(lat)) {
+         return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid lat or lon is required" })
+      }
+      if (!validator.default.isEmail(email)) {
+         return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid email" })
+      }
       updateStatus = await driverModel.findOneAndUpdate({ user_email: email },
          {
             user_id: driverId,
