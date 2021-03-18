@@ -415,10 +415,14 @@ trip.updateDestination = async (ws, payload) => {
 
    //update the distination
    let updateDest = await tripModel.TripRequests.findOneAndUpdate({ _id: trip_id }, {
-      end_lon: endLon,
-      end_lat: endLat,
-      end_address: endAddr,
-      $push: { previous_destination: oldDest },
+      $set: {
+         'riders.0.end_lon': endLon,
+         'riders.0.end_lat': endLat,
+         'riders.0.end_address': endAddr
+      },
+      $push: {
+         previous_destination: oldDest
+      },
    }, { new: true }).catch(e => ({ error: e }))
 
    //if error
