@@ -665,7 +665,7 @@ trip.getPendingTrip = async (ws, payload) => {
    if (getTrip && getTrip.error) {
       return
    }
-   helpers.outputResponse(ws, { action: requestAction.pendingTrip, data: [getTrip] })
+   helpers.outputResponse(ws, { action: requestAction.pendingTrip, data: getTrip })
 }
 
 module.exports = trip;
