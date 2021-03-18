@@ -647,7 +647,7 @@ trip.getPendingTrip = async (ws, payload) => {
       },
       {
          $lookup: {
-            from: "drivers",
+            from: "driver",
             localField: "driver_id",
             foreignField: "user_id",
             as: "driver_data"
