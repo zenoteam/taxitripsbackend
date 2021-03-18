@@ -54,7 +54,7 @@ socket.createServer = (httpServer) => {
          //add the user data to the obj
          ws._user_data = {
             token: `${checkToken.auth_id}`,
-            user_type: userType
+            user_type: userType,
          }
 
       } catch (e) {

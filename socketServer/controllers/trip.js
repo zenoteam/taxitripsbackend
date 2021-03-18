@@ -230,7 +230,7 @@ trip.driverPickedUpRider = async (ws, payload) => {
    let trip_id = riders[0].trip_id
    //update the data to arrive pickup
    let updateData = await tripModel.TripRequests.findOneAndUpdate({ _id: trip_id, 'riders.rider_id': rider_id },
-      { $set: { 'riders.$.statge': 2, 'riders.$.status': 'pick' } }, { new: true, lean: true }).catch(e => ({ error: e }))
+      { $set: { 'riders.$.statge': 2, 'riders.$.status': 'pick', 'riders.$.action': requestAction.driverPickedRider, } }, { new: true, lean: true }).catch(e => ({ error: e }))
 
    //check if it's not updated
    if (!updateData || updateData.error) {
@@ -638,7 +638,30 @@ trip.getPendingTrip = async (ws, payload) => {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid trip id is required" })
    }
    //find the trip
-   let getTrip = await tripModel.TripRequests.findOne({ _id: trip_id }, { riders: 1, ride_status: 1, ride_class: 1 }).catch(e => ({ error: e }))
+   // let getTrip = await tripModel.TripRequests.findOne({ _id: trip_id }, { riders: 1, ride_status: 1, ride_class: 1 }).catch(e => ({ error: e }))
+   let getTrip = await tripModel.TripRequests.aggregate([
+      {
+         $match: {
+            _id: trip_id
+         }
+      },
+      {
+         $lookup: {
+            from: "drivers",
+            localField: "driver_id",
+            foreignField: "user_id",
+            as: "driver_data"
+         }
+      },
+      {
+         $project: {
+            riders: 1,
+            ride_status: 1,
+            ride_class: 1,
+            driver_data: 1
+         }
+      }
+   ])
    if (getTrip && getTrip.error) {
       return
    }
