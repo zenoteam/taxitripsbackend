@@ -572,7 +572,7 @@ trip.cancelRequest = async (ws, payload) => {
          if (rData.driver && rData.driver.length > 0) {
             for (let i of rData.driver) {
                if (socketUser.online[i]) {
-                  helpers.outputResponse(ws, { action: requestAction.tripRequestCanceled, rider_id })
+                  helpers.outputResponse(ws, { action: requestAction.tripRequestCanceled, rider_id }, socketUser.online[i])
                }
             }
          }
