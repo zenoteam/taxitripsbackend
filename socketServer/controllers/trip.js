@@ -628,8 +628,8 @@ trip.getEstimatedFare = (ws, payload) => {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid estimated time is required" })
    }
    let getTimeFare = helpers.getTimeCoveredCharges(est_time, 15)
-   let getDstFare = helpers.getTimeCoveredCharges(est_dst, 15)
-   let total = Math.ceil(getTimeFare + getDstFare);
+   let getDstFare = helpers.getDistanceCoveredCharges(est_dst / 1000, 50)
+   let total = Math.ceil(220 + getTimeFare + getDstFare);
    let estFare = `${total}-${total + Math.ceil(total / 2)}`
    return helpers.outputResponse(ws, { action: requestAction.tripEstimatedFare, fare: estFare })
 }
