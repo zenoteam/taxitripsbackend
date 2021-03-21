@@ -734,7 +734,8 @@ driverMethod.EndRide = async (ws, payload) => {
       trip_id: payload.trip_id,
       class: payload.class,
       rider_id: payload.rider_id,
-      fare: totalFare
+      fare: totalFare,
+      start_time: updateData.updatedAt
    }
    //send the response to the rider (user)
    if (socketUser.online[payload.rider_id]) {
