@@ -621,6 +621,7 @@ driverMethod.StartRide = async (ws, payload) => {
             action: requestAction.driverStartTripSuccess,
             rider_id: payload.rider_id,
             class: payload.class,
+            start_time: updateData.updatedAt,
          }, socketUser.online[i.rider_id])
       }
    }
@@ -628,7 +629,7 @@ driverMethod.StartRide = async (ws, payload) => {
    helpers.outputResponse(ws, {
       action: requestAction.driverStartTripSuccess,
       rider_id: payload.rider_id,
-      class: payload.class,
+      class: payload.class, start_time: updateData.updatedAt,
    })
 }
 
