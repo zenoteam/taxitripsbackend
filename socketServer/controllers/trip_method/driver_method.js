@@ -202,8 +202,8 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
       })
       //send the response to the riders
       for (let i of onTripRiders) {
-         //if the user's trip was not cancel
-         if (i.rider_id !== payload.rider_id && i.status !== "cancel") {
+         //if the rider's id not the one the request is accepted for
+         if (i.rider_id !== payload.rider_id) {
             //if the user is online
             if (socketUser.online[i.rider_id]) {
                // console.log('Sent response to', i.rider_id)
@@ -219,7 +219,7 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
             // console.log('No Ride to send the response')
          }
       }
-      //send the response to the last rider
+      //send the response to the rider whose request is accepted
       if (socketUser.online[payload.rider_id]) {
          helpers.outputResponse(ws, sendData, socketUser.online[payload.rider_id])
       }
@@ -328,7 +328,7 @@ driverMethod.AcceptClassC = async (ws, payload, pendingData) => {
       //send the response to the riders
       for (let i of onTripRiders) {
          //if the user's trip was not cancel
-         if (i.rider_id !== payload.rider_id && i.status !== "cancel") {
+         if (i.rider_id !== payload.rider_id) {
             //if the user is online
             if (socketUser.online[i.rider_id]) {
                // console.log('Sent response to', i.rider_id)
@@ -453,7 +453,7 @@ driverMethod.AcceptClassD = async (ws, payload, pendingData) => {
       //send the response to the riders
       for (let i of onTripRiders) {
          //if the user's trip was not cancel
-         if (i.rider_id !== payload.rider_id && i.status !== "cancel") {
+         if (i.rider_id !== payload.rider_id) {
             //if the user is online
             if (socketUser.online[i.rider_id]) {
                // console.log('Sent response to', i.rider_id)

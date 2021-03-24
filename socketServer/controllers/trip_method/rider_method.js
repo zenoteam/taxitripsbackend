@@ -93,16 +93,6 @@ riderMethod.RequestClassA = async (ws, payload, driversDidNotAccept = []) => {
       //the rider data
       //the driver data
       let driverData = getDriver[0]
-      //add the distance to the payload
-      payload.est_dst = helpers.getGeometryDistanceKM(
-         {
-            latitude: payload.start_lat,
-            longitude: payload.start_lon
-         },
-         {
-            latitude: payload.end_lat,
-            longitude: payload.end_lon
-         })
       //hold the request payload and the driver's data till the driver accept the request
       socketUser.pendingTrip[riderData.token] = {
          ...payload,
@@ -173,16 +163,6 @@ riderMethod.RequestClassA = async (ws, payload, driversDidNotAccept = []) => {
 riderMethod.RequestClassB = async (ws, payload, driversDidNotAccept = []) => {
    //check if there's no payload, return
    if (!payload || !payload.class) return helpers.outputResponse({ error: "payload missing" })
-   //add the distance to the payload
-   payload.est_dst = helpers.getGeometryDistanceKM(
-      {
-         latitude: payload.start_lat,
-         longitude: payload.start_lon
-      },
-      {
-         latitude: payload.end_lat,
-         longitude: payload.end_lon
-      })
    //get the requestor data
    let riderData = ws._user_data
    let getPendingTrip = [];
@@ -339,16 +319,6 @@ riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = []) => {
    //check if there's no payload, return
    // console.log('New request', driversDidNotAccept)
    if (!payload || !payload.class) return helpers.outputResponse({ error: "payload missing" })
-   //add the distance to the payload
-   payload.est_dst = helpers.getGeometryDistanceKM(
-      {
-         latitude: payload.start_lat,
-         longitude: payload.start_lon
-      },
-      {
-         latitude: payload.end_lat,
-         longitude: payload.end_lon
-      })
    let getPendingTrip = [];
    //get the requestor data
    let riderData = ws._user_data
@@ -506,16 +476,6 @@ riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = []) => {
 riderMethod.RequestClassD = async (ws, payload, driversDidNotAccept = []) => {
    //check if there's no payload, return
    if (!payload || !payload.class) return helpers.outputResponse({ error: "payload missing" })
-   //add the distance to the payload
-   payload.est_dst = helpers.getGeometryDistanceKM(
-      {
-         latitude: payload.start_lat,
-         longitude: payload.start_lon
-      },
-      {
-         latitude: payload.end_lat,
-         longitude: payload.end_lon
-      })
    let getPendingTrip = [];
    //get the requestor data
    let riderData = ws._user_data

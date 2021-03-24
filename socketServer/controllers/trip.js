@@ -24,7 +24,6 @@ trip.requestDriver = (ws, payload) => {
    let est_fare = helpers.getInputValueString(payload, 'est_fare')
    let est_time = helpers.getInputValueNumber(payload, 'est_time')
    let rideClass = helpers.getInputValueString(payload, 'class')
-   let ARD = helpers.getInputValueString(payload, 'accept_recommendation')
 
    //check and validate the input
    if (isNaN(startLongitude) || isNaN(startLatitude)) {
@@ -61,10 +60,20 @@ trip.requestDriver = (ws, payload) => {
    if (!est_fare) {
       return helpers.outputResponse(ws, { error: "Estimated fare required. e.g est_fare:300-500", action: requestAction.inputError })
    }
-
    //check the class of ride
    if (["A", "B", "C", "D"].indexOf(rideClass) === -1) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid class" })
+   }
+   //if there's no distance submitted, calculate the distance
+   if (!payload.est_dst) {
+      //add the distance to the payload
+      payload.est_dst = helpers.getGeometryDistanceKM({
+         latitude: payload.start_lat,
+         longitude: payload.start_lon
+      }, {
+         latitude: payload.end_lat,
+         longitude: payload.end_lon
+      })
    }
 
    payload.name = payload.name.split(" ")[0]
@@ -572,7 +581,9 @@ trip.cancelRequest = async (ws, payload) => {
          if (rData.driver && rData.driver.length > 0) {
             for (let i of rData.driver) {
                if (socketUser.online[i]) {
-                  helpers.outputResponse(ws, { action: requestAction.tripRequestCanceled, rider_id }, socketUser.online[i])
+                  helpers.outputResponse(ws,
+                     { action: requestAction.tripRequestCanceled, rider_id },
+                     socketUser.online[i])
                }
             }
          }
