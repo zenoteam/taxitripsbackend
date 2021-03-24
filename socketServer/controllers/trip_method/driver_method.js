@@ -859,13 +859,3 @@ driverMethod.CancelRide = async (ws, payload) => {
 
 
 module.exports = driverMethod;
-
-//stage 
-//0 - driver accept request
-//1 - driver arrive pickup
-//2 - driver picked rider
-//3 - driver start trip
-//4 - driver delay trip
-//5 - driver end trip
-//6 - trip canceled
-

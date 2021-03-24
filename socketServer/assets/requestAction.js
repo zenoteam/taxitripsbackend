@@ -25,6 +25,9 @@ module.exports = {
    newTripRequest: "new_trip_request",
    newRideJoin: "new_rider_join_trip",
    pendingTrip: "pending_trip_request",
+   newChatMessage: "new_chat_message",
+   chatMessage: "chat_message",
    inputError: "input_error",
    serverError: "server_error",
+
 }
