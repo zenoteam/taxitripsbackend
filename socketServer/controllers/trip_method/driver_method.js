@@ -822,17 +822,6 @@ driverMethod.CancelRide = async (ws, payload) => {
       let updateDriver = await driverModel.findOneAndUpdate({ user_id: cancelTrip.driver_id },
          { on_trip: onTripUser.length === 1 ? "no" : "waiting" }).catch(e => ({ error: e }))
 
-      //notify all the riders that a ride has been canceled
-      for (let i of onTripUser) {
-         //send to all the riders on the trip
-         if (socketUser.online[i.rider_id] && i.status !== "cancel" && i.rider_id !== rider_id) {
-            helpers.outputResponse(ws, {
-               action: requestAction.tripRequestCanceled,
-               cancel_level: payload.cancel_level,
-               rider_id, trip_id
-            }, socketUser.online[i.rider_id])
-         }
-      }
       //send the response to the appropriate user
       if ((userType === "driver" && socketUser.online[payload.rider_id]) ||
          (userType !== "driver" && socketUser.online[cancelTrip.driver_id])) {
@@ -841,6 +830,19 @@ driverMethod.CancelRide = async (ws, payload) => {
             cancel_level: payload.cancel_level,
             rider_id, trip_id
          }, userType === "driver" ? socketUser.online[payload.rider_id] : socketUser.online[cancelTrip.driver_id])
+      }
+
+      //notify all the riders that a ride has been canceled
+      let notifyRidersOnTrip = onTripUser.filter(d => d.rider_id !== rider_id)
+      for (let i of notifyRidersOnTrip) {
+         //send to all the riders on the trip
+         if (socketUser.online[i.rider_id]) {
+            helpers.outputResponse(ws, {
+               action: requestAction.tripRequestCanceled,
+               cancel_level: payload.cancel_level,
+               rider_id, trip_id
+            }, socketUser.online[i.rider_id])
+         }
       }
 
       //reply the user who initiated the request
