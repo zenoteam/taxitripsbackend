@@ -313,7 +313,7 @@ trip.driverOnAMove = (ws, payload) => {
 trip.startTrip = (ws, payload) => {
    let tripID = helpers.getInputValueString(payload, 'trip_id')
    let rideClass = helpers.getInputValueString(payload, 'class')
-   let waitingTime = helpers.getInputValueArray(payload, 'waiting_time')
+   let waitingTime = helpers.getInputValueString(payload, 'waiting_time')
 
    //check if they are not available
    if (!tripID || tripID.length < 23) {
