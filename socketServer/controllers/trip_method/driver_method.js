@@ -663,7 +663,7 @@ driverMethod.StartRide = async (ws, payload) => {
             ride_status: 'on_ride'
          },
          { new: true }
-      ).catch(e => ({ error: e }))
+      )
    }
    //check if it's not updated
    if (!updateData || updateData.error) {
