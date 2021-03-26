@@ -370,7 +370,7 @@ trip.endTrip = (ws, payload) => {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "End time is required" })
 
    }
-   // console.log(payload)
+   console.log(payload)
    if (isNaN(totalDistance)) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Total distance is required" })
    }
