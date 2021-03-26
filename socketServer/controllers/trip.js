@@ -603,7 +603,7 @@ trip.cancelRequest = async (ws, payload) => {
             }
          }
          //reply the request
-         helpers.outputResponse(ws, { action: requestAction.tripCancelSuccessfully })
+         helpers.outputResponse(ws, { action: requestAction.tripCancelSuccessfully, rider_id })
       }
    } else {
       driverMethod.CancelRide(ws, payload)
