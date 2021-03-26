@@ -659,10 +659,14 @@ driverMethod.StartRide = async (ws, payload) => {
             $set: {
                'riders.$[].status': 'picked', 'riders.$[].start_trip_at': startTime,
                'riders.$[].stage': 3, 'riders.$[].action': requestAction.driverStartTripSuccess,
+               'riders.$[last].waiting_time': payload.waiting_time
             },
             ride_status: 'on_ride'
          },
-         { new: true }
+         {
+            arrayFilters: [{ 'last.rider_id': payload.rider_id }],
+            new: true,
+         }
       ).catch(e => ({ error: e }))
    }
    //check if it's not updated
