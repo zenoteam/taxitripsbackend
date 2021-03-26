@@ -44,7 +44,7 @@ router.use = (ws, payload) => {
       try {
          controller[sAction[1]](ws, payload) //pass in the variable needed by the function
       } catch (e) {
-         // console.log(e)
+         console.log(e)
          return helpers.outputResponse(ws, { error: "Requested resource is unavailable", action: requestAction.inputError })
       }
    } else {
