@@ -590,7 +590,7 @@ trip.cancelRequest = async (ws, payload) => {
       //if a driver cancels a request, search for another driver
       if (userType === 'driver') {
          tripRidersMethod['RequestClass' + rData.class](rData.ws, rData, rData.driver)
-         helpers.outputResponse(ws, { action: requestAction.tripCancelSuccessfully })
+         helpers.outputResponse(ws, { action: requestAction.tripCancelSuccessfully, rider_id })
       } else {
          //send cancel event to driver's if request was sent
          if (rData.driver && rData.driver.length > 0) {
