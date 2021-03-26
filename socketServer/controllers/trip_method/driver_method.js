@@ -651,9 +651,9 @@ driverMethod.StartRide = async (ws, payload) => {
          }, { new: true }).catch(e => ({ error: e }))
    } else {
       //check the riders data length
-      if (payload.riders.length !== 2) {
-         return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Incomplete riders data" })
-      }
+      // if (payload.riders.length !== 2) {
+      //    return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Incomplete riders data" })
+      // }
       updateData = await tripModel.TripRequests.findOneAndUpdate({ _id: payload.trip_id },
          {
             $set: {
