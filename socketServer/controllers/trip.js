@@ -226,10 +226,16 @@ trip.driverGoToPickUp = (ws, payload) => {
 trip.driverPickedUpRider = async (ws, payload) => {
    let rider_id = helpers.getInputValueString(payload, 'rider_id')
    let riders = helpers.getInputValueArray(payload, 'riders')
+   let waitingTime = helpers.getInputValueNumber(payload, 'waiting_time')
 
    //if the rider is not submitted
    if (!rider_id) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Rider ID is required" })
+   }
+
+   //check of there's no waiting time
+   if (isNaN(waitingTime)) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Waiting time is required" })
    }
 
    if (!(riders instanceof Array) || riders.length === 0) {
@@ -239,7 +245,13 @@ trip.driverPickedUpRider = async (ws, payload) => {
    let trip_id = riders[0].trip_id
    //update the data to arrive pickup
    let updateData = await tripModel.TripRequests.findOneAndUpdate({ _id: trip_id, 'riders.rider_id': rider_id },
-      { $set: { 'riders.$.statge': 2, 'riders.$.status': 'pick', 'riders.$.action': requestAction.driverPickedRider, } }, { new: true, lean: true }).catch(e => ({ error: e }))
+      {
+         $set: {
+            'riders.$.statge': 2, 'riders.$.status': 'pick',
+            'riders.$.action': requestAction.driverPickedRider,
+            'riders.$.waiting_time': waitingTime,
+         }
+      }, { new: true, lean: true }).catch(e => ({ error: e }))
 
    //check if it's not updated
    if (!updateData || updateData.error) {
@@ -301,7 +313,7 @@ trip.driverOnAMove = (ws, payload) => {
 trip.startTrip = (ws, payload) => {
    let tripID = helpers.getInputValueString(payload, 'trip_id')
    let rideClass = helpers.getInputValueString(payload, 'class')
-   let riders = helpers.getInputValueArray(payload, 'riders')
+   let waitingTime = helpers.getInputValueArray(payload, 'waiting_time')
 
    //check if they are not available
    if (!tripID || tripID.length < 23) {
@@ -316,11 +328,13 @@ trip.startTrip = (ws, payload) => {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Riders not valid" })
    }
 
+   //check the waiting time
+   if (isNaN(waitingTime)) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Waiting time is required" })
+   }
+
    //check if riders has required data
    for (let i of riders) {
-      if (!/^\d+$/.test(i.waiting_time)) {
-         return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Waiting time not valid" })
-      }
       if (!i.rider_id) {
          return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Rider id not valid" })
       }

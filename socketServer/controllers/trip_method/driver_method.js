@@ -514,6 +514,125 @@ driverMethod.ArrivePickUp = async (ws, payload) => {
 }
 
 //when the driver start trip
+// driverMethod.StartRide = async (ws, payload) => {
+//    let rideClass = payload.class
+//    let startTime = new Date().toISOString()
+//    let updateData;
+//    if (rideClass === "A") {
+//       //update the data to arrive start trip
+//       updateData = await tripModel.TripRequests.findOneAndUpdate({ _id: payload.trip_id },
+//          {
+//             $set: {
+//                'riders.0.status': 'picked',
+//                'riders.0.stage': 3,
+//                'riders.0.start_trip_at': startTime,
+//                'riders.0.waiting_time': payload.waiting_time,
+//                'riders.0.action': requestAction.driverStartTripSuccess,
+//             }, ride_status: 'on_ride'
+//          }, { new: true }).catch(e => ({ error: e }))
+//    } else if (rideClass === "B") {
+//       //check the riders data length
+//       if (payload.riders.length !== 2) {
+//          return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Incomplete riders data" })
+//       }
+//       updateData = await tripModel.TripRequests.findOneAndUpdate({ _id: payload.trip_id },
+//          {
+//             $set: {
+//                'riders.$[].status': 'picked', 'riders.$[].start_trip_at': startTime,
+//                'riders.$[].stage': 3, 'riders.$[].action': requestAction.driverStartTripSuccess,
+//                // 'riders.$[first].waiting_time': payload.riders[0].waiting_time,
+//                // 'riders.$[second].waiting_time': payload.riders[1].waiting_time,
+//             },
+//             ride_status: 'on_ride'
+//          },
+//          {
+//             arrayFilters: [
+//                { "first.rider_id": payload.riders[0].rider_id },
+//                { "second.rider_id": payload.riders[1].rider_id }
+//             ],
+//             new: true
+//          }
+//       ).catch(e => ({ error: e }))
+
+//    } else if (rideClass === "C") {
+//       //check the riders data length
+//       if (payload.riders.length !== 3) {
+//          return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Incomplete riders data" })
+//       }
+//       updateData = await tripModel.TripRequests.findOneAndUpdate({ _id: payload.trip_id },
+//          {
+//             $set: {
+//                'riders.$[].status': 'picked', 'riders.$[].start_trip_at': startTime,
+//                'riders.$[].stage': 3, 'riders.$[].action': requestAction.driverStartTripSuccess,
+//                'riders.$[first].waiting_time': payload.riders[0].waiting_time,
+//                'riders.$[second].waiting_time': payload.riders[1].waiting_time,
+//                'riders.$[third].waiting_time': payload.riders[2].waiting_time,
+//             },
+//             ride_status: 'on_ride'
+//          },
+//          {
+//             arrayFilters: [
+//                { "first.rider_id": payload.riders[0].rider_id },
+//                { "second.rider_id": payload.riders[1].rider_id },
+//                { "third.rider_id": payload.riders[2].rider_id },
+//             ],
+//             new: true
+//          }
+//       ).catch(e => ({ error: e }))
+//    } else if (rideClass === "D") {
+//       //check the riders data length
+//       if (payload.riders.length !== 4) {
+//          return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Incomplete riders data" })
+//       }
+//       updateData = await tripModel.TripRequests.findOneAndUpdate({ _id: payload.trip_id },
+//          {
+//             $set: {
+//                'riders.$[].status': 'picked', 'riders.$[].start_trip_at': startTime,
+//                'riders.$[].stage': 3, 'riders.$[].action': requestAction.driverStartTripSuccess,
+//                'riders.$[first].waiting_time': payload.riders[0].waiting_time,
+//                'riders.$[second].waiting_time': payload.riders[1].waiting_time,
+//                'riders.$[third].waiting_time': payload.riders[2].waiting_time,
+//                'riders.$[forth].waiting_time': payload.riders[3].waiting_time,
+//             },
+//             ride_status: 'on_ride'
+//          },
+//          {
+//             arrayFilters: [
+//                { "first.rider_id": payload.riders[0].rider_id },
+//                { "second.rider_id": payload.riders[1].rider_id },
+//                { "third.rider_id": payload.riders[2].rider_id },
+//                { "forth.rider_id": payload.riders[3].rider_id },
+//             ],
+//             new: true
+//          }
+//       ).catch(e => ({ error: e }))
+//    } else {
+//       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Unknown Class" })
+//    }
+//    //check if it's not updated
+//    if (!updateData || updateData.error) {
+//       //do somthing here
+//       return helpers.outputResponse(ws, { action: requestAction.serverError, })
+//    }
+//    //send the response to the rider(s)
+//    for (let i of payload.riders) {
+//       if (socketUser.online[i.rider_id]) {
+//          helpers.outputResponse(ws, {
+//             action: requestAction.driverStartTripSuccess,
+//             rider_id: payload.rider_id,
+//             class: payload.class,
+//             start_time: updateData.updatedAt,
+//          }, socketUser.online[i.rider_id])
+//       }
+//    }
+//    //send the response to the driver
+//    helpers.outputResponse(ws, {
+//       action: requestAction.driverStartTripSuccess,
+//       rider_id: payload.rider_id,
+//       class: payload.class, start_time: updateData.updatedAt,
+//    })
+// }
+
 driverMethod.StartRide = async (ws, payload) => {
    let rideClass = payload.class
    let startTime = new Date().toISOString()
@@ -526,11 +645,11 @@ driverMethod.StartRide = async (ws, payload) => {
                'riders.0.status': 'picked',
                'riders.0.stage': 3,
                'riders.0.start_trip_at': startTime,
-               'riders.0.waiting_time': payload.riders[0].waiting_time,
+               'riders.0.waiting_time': payload.waiting_time,
                'riders.0.action': requestAction.driverStartTripSuccess,
             }, ride_status: 'on_ride'
          }, { new: true }).catch(e => ({ error: e }))
-   } else if (rideClass === "B") {
+   } else {
       //check the riders data length
       if (payload.riders.length !== 2) {
          return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Incomplete riders data" })
@@ -540,74 +659,11 @@ driverMethod.StartRide = async (ws, payload) => {
             $set: {
                'riders.$[].status': 'picked', 'riders.$[].start_trip_at': startTime,
                'riders.$[].stage': 3, 'riders.$[].action': requestAction.driverStartTripSuccess,
-               'riders.$[first].waiting_time': payload.riders[0].waiting_time,
-               'riders.$[second].waiting_time': payload.riders[1].waiting_time,
             },
             ride_status: 'on_ride'
          },
-         {
-            arrayFilters: [
-               { "first.rider_id": payload.riders[0].rider_id },
-               { "second.rider_id": payload.riders[1].rider_id }
-            ],
-            new: true
-         }
+         { new: true }
       ).catch(e => ({ error: e }))
-
-   } else if (rideClass === "C") {
-      //check the riders data length
-      if (payload.riders.length !== 3) {
-         return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Incomplete riders data" })
-      }
-      updateData = await tripModel.TripRequests.findOneAndUpdate({ _id: payload.trip_id },
-         {
-            $set: {
-               'riders.$[].status': 'picked', 'riders.$[].start_trip_at': startTime,
-               'riders.$[].stage': 3, 'riders.$[].action': requestAction.driverStartTripSuccess,
-               'riders.$[first].waiting_time': payload.riders[0].waiting_time,
-               'riders.$[second].waiting_time': payload.riders[1].waiting_time,
-               'riders.$[third].waiting_time': payload.riders[2].waiting_time,
-            },
-            ride_status: 'on_ride'
-         },
-         {
-            arrayFilters: [
-               { "first.rider_id": payload.riders[0].rider_id },
-               { "second.rider_id": payload.riders[1].rider_id },
-               { "third.rider_id": payload.riders[2].rider_id },
-            ],
-            new: true
-         }
-      ).catch(e => ({ error: e }))
-   } else if (rideClass === "D") {
-      //check the riders data length
-      if (payload.riders.length !== 4) {
-         return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Incomplete riders data" })
-      }
-      updateData = await tripModel.TripRequests.findOneAndUpdate({ _id: payload.trip_id },
-         {
-            $set: {
-               'riders.$[].status': 'picked', 'riders.$[].start_trip_at': startTime,
-               'riders.$[].stage': 3, 'riders.$[].action': requestAction.driverStartTripSuccess,
-               'riders.$[first].waiting_time': payload.riders[0].waiting_time,
-               'riders.$[second].waiting_time': payload.riders[1].waiting_time,
-               'riders.$[third].waiting_time': payload.riders[2].waiting_time,
-               'riders.$[forth].waiting_time': payload.riders[3].waiting_time,
-            },
-            ride_status: 'on_ride'
-         },
-         {
-            arrayFilters: [
-               { "first.rider_id": payload.riders[0].rider_id },
-               { "second.rider_id": payload.riders[1].rider_id },
-               { "third.rider_id": payload.riders[2].rider_id },
-               { "forth.rider_id": payload.riders[3].rider_id },
-            ],
-            new: true
-         }
-      ).catch(e => ({ error: e }))
-   } else {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Unknown Class" })
    }
    //check if it's not updated
    if (!updateData || updateData.error) {
@@ -632,6 +688,7 @@ driverMethod.StartRide = async (ws, payload) => {
       class: payload.class, start_time: updateData.updatedAt,
    })
 }
+
 
 //when the driver ends trip
 driverMethod.EndRide = async (ws, payload) => {
