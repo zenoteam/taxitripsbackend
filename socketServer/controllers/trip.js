@@ -314,7 +314,7 @@ trip.startTrip = (ws, payload) => {
    let tripID = helpers.getInputValueString(payload, 'trip_id')
    let rideClass = helpers.getInputValueString(payload, 'class')
    let waitingTime = helpers.getInputValueString(payload, 'waiting_time')
-   let riders = helpers.getInputValueString(payload, 'riders')
+   let riders = helpers.getInputValueArray(payload, 'riders')
 
    //check if they are not available
    if (!tripID || tripID.length < 23) {
