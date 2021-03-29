@@ -477,6 +477,8 @@ trip.updateDestination = async (ws, payload) => {
 trip.delayRide = async (ws, payload) => {
    let trip_id = helpers.getInputValueString(payload, 'trip_id')
    let rider_id = helpers.getInputValueString(payload, 'rider_id')
+   // console.log(payload)
+   //send the request to the user
    if (socketUser.online[rider_id]) {
       helpers.outputResponse(ws, {
          action: requestAction.delayRideRequest,
