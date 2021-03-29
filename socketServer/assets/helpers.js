@@ -4,7 +4,8 @@ const helpers = {}
 
 
 helpers.zenoTripDBLocal = 'mongodb://localhost:27017/zeno_trip';
-helpers.zenoTripDBLIve = 'mongodb+srv://increase_21:QRudhu0Fsw0b166S@cluster0-mszft.mongodb.net/zeno_trip?retryWrites=true&w=majority';
+helpers.zenoTripDBLIve = 'mongodb://localhost:27017/zeno_trip';
+// helpers.zenoTripDBLIve = 'mongodb+srv://increase_21:QRudhu0Fsw0b166S@cluster0-mszft.mongodb.net/zeno_trip?retryWrites=true&w=majority';
 
 
 // for generating token
