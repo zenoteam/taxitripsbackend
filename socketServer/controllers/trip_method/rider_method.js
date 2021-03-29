@@ -7,7 +7,7 @@ const socketUser = require('../../assets/socketUser')
 const riderMethod = {}
 
 //for delaying a request for 30 while sending to the driver
-const requestDriverWaitFor30Sec = (rider_id, ws) => {
+riderMethod.requestDriverWaitFor30Sec = (rider_id, ws) => {
    socketUser.requestDriverTimer[rider_id] = setTimeout(() => {
       // console.log('time finished')
       //if the request has been sent to 2 or more drivers and no answer, send response that was no driver available
@@ -56,8 +56,6 @@ const requestDriverWaitFor30Sec = (rider_id, ws) => {
       delete socketUser.requestDriverTimer[rider_id]
    }, 30000)
 }
-
-
 
 
 
@@ -111,7 +109,7 @@ riderMethod.RequestClassA = async (ws, payload, driversDidNotAccept = []) => {
       //if driver is online, send the request to the driver and wait for 30 secs to accept
       if (socketUser.online[driverData.user_id]) {
          helpers.outputResponse(ws, sendData, socketUser.online[driverData.user_id])
-         requestDriverWaitFor30Sec(sendData.rider_id, ws)
+         riderMethod.requestDriverWaitFor30Sec(sendData.rider_id, ws)
       } else {
          //if driver's device is not reachable, go back and find another driver and exempt this driver
          riderMethod.RequestClassA(ws, payload, [...driversDidNotAccept, driverData.user_id])
@@ -233,7 +231,7 @@ riderMethod.RequestClassB = async (ws, payload, driversDidNotAccept = []) => {
          //check if driver online, send the request and wait for 30sec
          if (socketUser.online[td.driver_id]) {
             helpers.outputResponse(ws, sendData, socketUser.online[td.driver_id])
-            requestDriverWaitFor30Sec(riderData.token, ws, [...driversDidNotAccept, td.driver_id])
+            riderMethod.requestDriverWaitFor30Sec(riderData.token, ws, [...driversDidNotAccept, td.driver_id])
          } else {
             //if the driver's phone not reachable,
             //if it's a trip recommendation, tell the user the driver is not available
@@ -302,7 +300,7 @@ riderMethod.RequestClassB = async (ws, payload, driversDidNotAccept = []) => {
          //if driver online, send the request and wait for 30sec
          if (socketUser.online[driverData.user_id]) {
             helpers.outputResponse(ws, sendData, socketUser.online[driverData.user_id])
-            requestDriverWaitFor30Sec(riderData.token, ws)
+            riderMethod.requestDriverWaitFor30Sec(riderData.token, ws)
          } else {
             riderMethod.RequestClassB(ws, payload, [...driversDidNotAccept, driverData.user_id])
          }
@@ -384,13 +382,12 @@ riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = []) => {
          let sendData = {
             ...payload,
             rider_id: riderData.token,
-            // rider: td.riders.length === 2 ? 3 : 2,
             action: requestAction.newTripRequest,
          }
          //check if driver is online, send the request and wait for 30sec
          if (socketUser.online[td.driver_id]) {
             helpers.outputResponse(ws, sendData, socketUser.online[td.driver_id])
-            requestDriverWaitFor30Sec(riderData.token, ws, [...driversDidNotAccept, td.driver_id])
+            riderMethod.requestDriverWaitFor30Sec(riderData.token, ws, [...driversDidNotAccept, td.driver_id])
          } else {
             //if the driver's phone not reachable,
             //if it's a trip recommendation, tell the user the driver is not available
@@ -459,7 +456,7 @@ riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = []) => {
          //if driver online, send the request and wait for 30sec
          if (socketUser.online[driverData.user_id]) {
             helpers.outputResponse(ws, sendData, socketUser.online[driverData.user_id])
-            requestDriverWaitFor30Sec(riderData.token, ws)
+            riderMethod.requestDriverWaitFor30Sec(riderData.token, ws)
          } else {
             riderMethod.RequestClassC(ws, payload, [...driversDidNotAccept, driverData.user_id])
          }
@@ -547,7 +544,7 @@ riderMethod.RequestClassD = async (ws, payload, driversDidNotAccept = []) => {
          //check if driver is online, send the request and wait for 30sec
          if (socketUser.online[td.driver_id]) {
             helpers.outputResponse(ws, sendData, socketUser.online[td.driver_id])
-            requestDriverWaitFor30Sec(riderData.token, ws, [...driversDidNotAccept, td.driver_id])
+            riderMethod.requestDriverWaitFor30Sec(riderData.token, ws, [...driversDidNotAccept, td.driver_id])
          } else {
             //if the driver's phone not reachable,
             //if it's a trip recommendation, tell the user the driver is not available
@@ -616,7 +613,7 @@ riderMethod.RequestClassD = async (ws, payload, driversDidNotAccept = []) => {
          //if driver online, send the request and wait for 30sec
          if (socketUser.online[driverData.user_id]) {
             helpers.outputResponse(ws, sendData, socketUser.online[driverData.user_id])
-            requestDriverWaitFor30Sec(riderData.token, ws)
+            riderMethod.requestDriverWaitFor30Sec(riderData.token, ws)
          } else {
             riderMethod.RequestClassD(ws, payload, [...driversDidNotAccept, driverData.user_id])
          }

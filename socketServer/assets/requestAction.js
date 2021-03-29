@@ -22,6 +22,7 @@ module.exports = {
    delayRideRequest: "driver_asks_to_delay_ride",
    continueDelayRideRequest: "driver_asks_to_continue_ride",
    delayRideRequestAccepted: "delay_ride_accepted",
+   driverOnAPendingTrip: "driver_has_a_pending_request",
    newTripRequest: "new_trip_request",
    newRideJoin: "new_rider_join_trip",
    pendingTrip: "pending_trip_request",
@@ -29,5 +30,4 @@ module.exports = {
    chatMessage: "chat_message",
    inputError: "input_error",
    serverError: "server_error",
-
 }

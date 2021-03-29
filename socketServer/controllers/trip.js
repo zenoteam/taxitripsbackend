@@ -1,7 +1,7 @@
 const validator = require('validator')
 const helpers = require('../assets/helpers')
 const requestAction = require('../assets/requestAction')
-const tripRidersMethod = require('./trip_method/rider_method')
+const riderMethod = require('./trip_method/rider_method')
 const socketUser = require('../assets/socketUser')
 const driverMethod = require('./trip_method/driver_method')
 const tripModel = require('../../models/trip_request')
@@ -80,16 +80,16 @@ trip.requestDriver = (ws, payload) => {
    // do the trip request switch
    switch (rideClass) {
       case "A":
-         tripRidersMethod.RequestClassA(ws, payload, []);
+         riderMethod.RequestClassA(ws, payload, []);
          break;
       case "B":
-         tripRidersMethod.RequestClassB(ws, payload, []);
+         riderMethod.RequestClassB(ws, payload, []);
          break;
       case "C":
-         tripRidersMethod.RequestClassC(ws, payload, []);
+         riderMethod.RequestClassC(ws, payload, []);
          break;
       case "D":
-         tripRidersMethod.RequestClassD(ws, payload, []);
+         riderMethod.RequestClassD(ws, payload, []);
          break;
       default:
          helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid request" })
@@ -591,7 +591,7 @@ trip.cancelRequest = async (ws, payload) => {
       }
       //if a driver cancels a request, search for another driver
       if (userType === 'driver') {
-         tripRidersMethod['RequestClass' + rData.class](rData.ws, rData, rData.driver)
+         riderMethod['RequestClass' + rData.class](rData.ws, rData, rData.driver)
          helpers.outputResponse(ws, { action: requestAction.tripCancelSuccessfully, rider_id })
       } else {
          //send cancel event to driver's if request was sent
@@ -694,6 +694,37 @@ trip.getPendingTrip = async (ws, payload) => {
       return
    }
    helpers.outputResponse(ws, { action: requestAction.pendingTrip, data: getTrip })
+}
+
+//function to handle a re-requesting of a driver when on a request
+trip.driverOnRequest = async (ws, payload) => {
+   let rider_id = helpers.getInputValueString(payload, 'rider_id')
+   let driver_id = helpers.getInputValueString(payload, 'driver_id')
+   //check if the request has been canceled
+   if (!socketUser.pendingTrip[rider_id]) { return }
+   //check if there's no driver ID
+   if (!driver_id || driver_id.length < 5) { return }
+   //if the request has been tried twice, don't try again
+   if (payload.trial === 2) { return }
+   //get the pending data
+   let getPendData = socketUser.pendingTrip[rider_id]
+   let sendData = {
+      ...getPendData,
+      action: requestAction.newTripRequest,
+      trial: 2,
+      driver: undefined,
+      request_time: undefined,
+      ws: undefined
+   }
+   //clear the timer request
+   clearTimeout(socketUser.requestDriverTimer[rider_id])
+   delete socketUser.requestDriverTimer[rider_id] //remove from the object
+   //open another wait time to check on the driver
+   setTimeout(() => {
+      helpers.outputResponse(ws, sendData)
+      riderMethod.requestDriverWaitFor30Sec(rider_id, getPendData.ws)
+   }, 6000);
+
 }
 
 module.exports = trip;
