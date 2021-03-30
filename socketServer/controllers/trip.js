@@ -388,6 +388,7 @@ trip.updateDestination = async (ws, payload) => {
    let endLon = helpers.getInputValueNumber(payload, 'end_lon')
    let endLat = helpers.getInputValueNumber(payload, 'end_lat')
    let rideClass = helpers.getInputValueString(payload, 'class')
+   let fare = helpers.getInputValueString(payload, 'est_fare')
 
    //check the values
    if (!endLon || isNaN(endLon)) {
@@ -411,6 +412,10 @@ trip.updateDestination = async (ws, payload) => {
    if (!trip_id || trip_id.length !== 24) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid trip id is required" })
    }
+   if (!fare || fare.length < 2) {
+      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Estimated Fare not submitted" })
+   }
+
    //check the trip ID
    let getTrip = await tripModel.TripRequests.findOne({ _id: trip_id }).catch(e => ({ error: e }))
    //check if there's an error

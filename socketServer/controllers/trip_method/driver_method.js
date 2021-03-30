@@ -23,6 +23,7 @@ const getRiderData = (payload, pendingData) => {
       est_dst: pendingData.est_dst,
       est_time: pendingData.est_time,
       est_fare: pendingData.est_fare,
+      sex: pendingData.sex,
       accepted_at: new Date().toISOString(),
       arrive_pickup_at: '',
       start_trip_at: '',
@@ -530,10 +531,6 @@ driverMethod.StartRide = async (ws, payload) => {
             }, ride_status: 'on_ride'
          }, { new: true }).catch(e => ({ error: e }))
    } else {
-      //check the riders data length
-      // if (payload.riders.length !== 2) {
-      //    return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Incomplete riders data" })
-      // }
       updateData = await tripModel.TripRequests.findOneAndUpdate({ _id: payload.trip_id },
          {
             $set: {
