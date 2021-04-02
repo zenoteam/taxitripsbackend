@@ -23,6 +23,10 @@ const TripRequests = new Schema({
       enum: ["A", "B", "C", "D"],
       required: true
    },
+   ride_class_complete: {
+      type: Boolean,
+      default: false
+   },
    rider_compass: {
       type: String,
       required: true
