@@ -441,32 +441,71 @@ trip.updateDestination = async (ws, payload) => {
    let endLat = helpers.getInputValueNumber(payload, 'end_lat')
    let rideClass = helpers.getInputValueString(payload, 'class')
    let fare = helpers.getInputValueString(payload, 'est_fare')
+   let estTime = helpers.getInputValueNumber(payload, 'est_time')
+   let estDst = helpers.getInputValueNumber(payload, 'est_dst')
 
    //check the values
    if (!endLon || isNaN(endLon)) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid end longitude is required" })
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "A valid end longitude is required"
+      })
    }
    //check the values
    if (!endLat || isNaN(endLat)) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid end latitude is required" })
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "A valid end latitude is required"
+      })
    }
    //check address
    if (!endAddr || endAddr.length < 2) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid address is required" })
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "A valid address is required"
+      })
    }
    if (!rideClass) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Ride class is required" })
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "Ride class is required"
+      })
    }
    if (rideClass !== "A") {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: `Feature not allowed for ${rideClass}. This is only allowed for class A` })
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: `Feature not allowed for ${rideClass}. This is only allowed for class A`
+      })
    }
    //check the trip id
    if (!trip_id || trip_id.length !== 24) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid trip id is required" })
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "A valid trip id is required"
+      })
    }
+
    if (!fare || fare.length < 2) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Estimated Fare not submitted" })
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "Estimated Fare not submitted"
+      })
    }
+
+   if (!estTime || isNaN(estTime)) {
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "Estimated est_time is required"
+      })
+   }
+
+   if (!estDst || isNaN(estDst)) {
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "Estimated est_dst is required"
+      })
+   }
+
 
    //check the trip ID
    let getTrip = await tripModel.TripRequests.findOne({ _id: trip_id }).catch(e => ({ error: e }))
@@ -492,6 +531,8 @@ trip.updateDestination = async (ws, payload) => {
       end_lat: getRider.end_lat,
       start_address: getRider.start_address,
       end_address: getRider.end_address,
+      est_time: getRider.est_time,
+      est_dst: getRider.est_dst
    }
 
    //update the distination
@@ -499,7 +540,9 @@ trip.updateDestination = async (ws, payload) => {
       $set: {
          'riders.0.end_lon': endLon,
          'riders.0.end_lat': endLat,
-         'riders.0.end_address': endAddr
+         'riders.0.end_address': endAddr,
+         'riders.0.est_time': estTime,
+         'riders.0.est_fare': fare,
       },
       $push: {
          previous_destination: oldDest
