@@ -2,7 +2,8 @@ const io = require('socket.io')
 const request = require('request')
 const socketUsers = require('./assets/socketUser')
 const driverModel = require('../models/driver');
-const router = require('./router')
+const router = require('./router');
+const helpers = require('./assets/helpers');
 const socket = {}
 
 //create socket.io server
@@ -42,7 +43,11 @@ socket.createServer = (httpServer) => {
          return next(new Error('Unauthorized'));
       }
       //check the token with the auth service
-      let checkToken = await socket.verifyBearerToken(userToken)
+      let checkToken = await helpers.makeHTTPRequest({
+         uri: 'http://212.71.246.199:8000/api/verify/',
+         method: 'GET', headers: { "Authorization": userToken }
+      })
+      // let checkToken = await socket.verifyBearerToken(userToken)
       console.log(checkToken)
       //if the token is invalid
       try {

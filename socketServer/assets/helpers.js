@@ -1,4 +1,5 @@
 const socketUser = require("./socketUser");
+const request = require('request')
 
 const helpers = {}
 
@@ -94,6 +95,15 @@ helpers.getGeometryDistanceKM = (geo1, geo2) => {
    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
    var d = R * c; // Distance in km
    return !isNaN(d) ? d.toFixed(2) : d;
+}
+
+//for verifying user token
+helpers.makeHTTPRequest = (obj = { uri: '', method: '', headers: {} }) => {
+   return new Promise((resolve, reject) => {
+      request(obj, (err, res, body) => {
+         resolve(err ? { error: err } : body)
+      })
+   })
 }
 
 

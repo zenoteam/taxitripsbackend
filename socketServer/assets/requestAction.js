@@ -26,6 +26,8 @@ module.exports = {
    delayRideRequestAccepted: "delay_ride_accepted",
    continueRideRequestAccepted: "continue_ride_accepted",
    driverOnAPendingTrip: "driver_has_a_pending_request",
+   riderAcceptRideInvite: "rider_accept_ride_invite",
+   rideInvitation: "ride_invitation",
    newTripRequest: "new_trip_request",
    newRideJoin: "new_rider_join_trip",
    pendingTrip: "pending_trip_request",

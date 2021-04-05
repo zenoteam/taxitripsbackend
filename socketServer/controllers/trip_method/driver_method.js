@@ -28,7 +28,8 @@ const getRiderData = (payload, pendingData) => {
       start_trip_at: '',
       delay_trip_at: '',
       end_trip_at: '',
-      class: pendingData.class,
+      class: pendingData.class_complete ? pendingData.class_complete : pendingData.class,
+      class_complete: pendingData.class_complete,
       waiting_time: 0,
       end_time: 0,
       delay_time: 0,
@@ -50,7 +51,8 @@ driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
    //get the driver's unique id
    let driverId = ws._user_data.token
    // update the driver's trip data
-   let updateDriver = await driverModel.findOneAndUpdate({ user_id: driverId }, { on_trip: "yes" }, { new: true }).catch(e => ({ error: e }))
+   let updateDriver = await driverModel.findOneAndUpdate({ user_id: driverId },
+      { on_trip: "yes" }, { new: true }).catch(e => ({ error: e }))
    //if there's an error 
    if (!updateDriver || updateDriver.error) {
       return helpers.outputResponse(ws, { action: requestAction.serverError })
@@ -58,96 +60,69 @@ driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
    //delete the request from pending requests
    delete socketUser.pendingTrip[payload.rider_id]
 
+   let riderData = []
+
    //if the request is a class complete
    if (pendingData.class_complete) {
-      let riderData = []
       //push the other riders data to the array
       for (let i of pendingData.riders) {
          riderData.push(getRiderData(payload, {
             ...pendingData,
-            name: i.name, phone: i.phone, sex: i.sex, avatar: i.avatar
+            name: i.name, phone: i.phone, sex: i.sex,
+            avatar: i.avatar, rider_id: i.rider_id
          }))
       }
+   } else {
+      riderData = getRiderData(payload, pendingData)
+      riderData.rider = 1 //add the rider position
+   }
 
-      //add the host data to the array
-      riderData.push(getRiderData(payload, pendingData))
+   //save the trip data
+   let saveTrip = await tripModel.TripRequests.create({
+      driver_id: driverId,
+      riders: riderData,
+      ride_status: "on_pickup",
+      ride_class: pendingData.class_complete ? pendingData.class_complete : "A",
+      rider_compass: payload.rider_id,
+      ride_class_complete: pendingData.class_complete ? true : false,
+      location: [{
+         origin: { coordinates: [pendingData.start_lon, pendingData.start_lat] },
+         destination: { coordinates: [pendingData.end_lon, pendingData.end_lat] }
+      }]
+   }).catch(e => ({ error: e }))
 
-      //save the data
-      let saveData = await tripModel.TripRequests.findOneAndUpdate({ ride_class_complete: payload.rider_id },
-         {
-            driver_id: driverId,
-            $push: {
-               riders: { $each: riderData }
-            },
-            ride_status: "on_pickup",
-            ride_class: pendingData.class_complete,
-            rider_compass: payload.rider_id,
-            ride_class_complete: true,
-            location: [{
-               origin: { coordinates: [pendingData.start_lon, pendingData.start_lat] },
-               destination: { coordinates: [pendingData.end_lon, pendingData.end_lat] }
-            }]
-         }, { new: true, upsert: true }).catch(e => ({ error: e }))
-      //if there's error
-      if (!saveData || saveData.error) {
-         return helpers.outputResponse(ws, { action: requestAction.serverError })
-      }
-      //get all the riders who are still on trip
-      let onTripRiders = saveData.riders.filter(d => d.status !== "cancel")
-      //send the response to the driver
-      helpers.outputResponse(ws, {
-         action: requestAction.tripRequestAvailabe,
-         class: "A", rider: 1,
-         ride_class_complete: true,
-         rider_id: payload.rider_id,
-         trip_id: saveData._id
-      })
-      //send the response to the riders
+   // send response to the driver
+   let sendData = {
+      action: requestAction.tripRequestAvailabe,
+      rider_id: payload.rider_id,
+      class: 'A', trip_id: saveTrip._id
+   }
+   helpers.outputResponse(ws, sendData)
+
+   //send response to the user (rider) that a driver accepts the request
+   if (saveTrip.ride_class_complete === true) {
+      //get all riders who still on trip
+      let onTripRiders = saveTrip.riders.filter(e => e.status !== "cancel")
+      //send em the respone
       for (let i of onTripRiders) {
          //if the user is online
          if (socketUser.online[i.rider_id]) {
-            // console.log('Sent response to', i.rider_id)
             helpers.outputResponse(ws, {
                ...payload,
                car_plate_number: updateDriver.car_plate_number,
                car_color: updateDriver.car_color,
                car_model: updateDriver.car_model,
-               trip_id: saveData._id,
+               trip_id: saveTrip._id,
                driver_id: driverId,
-               action: requestAction.driverAcceptRequest,
+               rider_id: i.rider_id,
                riders: onTripRiders,
-               rider_id: i.rider_id
+               class: pendingData.class_complete,
+               class_complete: pendingData.class_complete,
+               action: requestAction.driverAcceptRequest
             }, socketUser.online[i.rider_id])
-         } else {
-            // console.log('Rider not online', i.rider_id)
          }
       }
    } else {
-      //Saving the trip in the trip table
-      let riderData = getRiderData(payload, pendingData)
-      riderData.rider = 1 //add the rider position
-      //save the trip data
-      let saveTrip = await tripModel.TripRequests.create({
-         driver_id: driverId,
-         riders: riderData,
-         ride_status: "on_pickup",
-         ride_class: "A",
-         rider_compass: payload.rider_id,
-         location: [{
-            origin: { coordinates: [pendingData.start_lon, pendingData.start_lat] },
-            destination: { coordinates: [pendingData.end_lon, pendingData.end_lat] }
-         }]
-      }).catch(e => ({ error: e }))
-
-      // send response to the driver
-      let sendData = {
-         action: requestAction.tripRequestAvailabe,
-         rider_id: payload.rider_id,
-         class: 'A', trip_id: saveTrip._id
-      }
-      helpers.outputResponse(ws, sendData)
-
-      //send response to the user (rider) that a driver accepts the request
       if (socketUser.online[payload.rider_id]) {
          let sendData1 = {
             ...payload,
@@ -674,7 +649,6 @@ driverMethod.EndRide = async (ws, payload) => {
    let totalDstCovered = parseFloat(payload.total_distance)
    //fix fares
    let baseFare = 220
-   let eachFare;
    let timeFarePerMinute = 15
    let distanceFarePerKM = 50
    let waitingFarePerMinute = 10
@@ -685,16 +659,15 @@ driverMethod.EndRide = async (ws, payload) => {
    //if the time covered is more than the est time or the distance covered is less than the estimated distance
 
    //get time fare
-   //then calculate fare by time
    let getTimeFare = helpers.getTimeCoveredCharges(totalTimeCovered, timeFarePerMinute)
+   //get distance fare
+   let getDstFare = helpers.getDistanceCoveredCharges(totalDstCovered, distanceFarePerKM)
+
    //split the fare if not a class a ride
    if (payload.class !== "A") {
       getTimeFare /= payload.class === "B" ? 2 : payload.class === "C" ? 3 : 4
    }
 
-   //get distance fare
-   //else calculate fare by distance
-   let getDstFare = helpers.getDistanceCoveredCharges(totalDstCovered, distanceFarePerKM)
    //split the fare if not a class a ride
    if (payload.class !== "A") {
       getDstFare /= payload.class === "B" ? 2 : payload.class === "C" ? 3 : 4
@@ -702,55 +675,62 @@ driverMethod.EndRide = async (ws, payload) => {
 
    //sum the total fare
    totalFare = Math.ceil(getTimeFare + getDstFare + getWaitingFare + baseFare)
+
    //get people that hv been dropped off
    let dropOffRiders = getUser.riders.filter(d => d.status === 'completed')
-   //clear the driver from ontrip
-   let updateDriver = await driverModel.findOneAndUpdate({ user_id: ws._user_data.token },
-      { on_trip: "no", 'location.coordinates': [payload.longitude, payload.latitude] },
-      { new: true }).catch(e => ({ error: e }))
-   //check if it's not updated
-   if (!updateDriver || updateDriver.error) {
-      helpers.outputResponse(ws, { action: requestAction.inputError, error: "Your status could not be set to available. Please contact support" })
+
+   //check the trip and clear the driver
+   if ((rideClass === "B" && dropOffRiders.length === 1) ||
+      (rideClass === "C" && dropOffRiders.length === 2) ||
+      (rideClass === "D" && dropOffRiders.length === 3) ||
+      rideClass === "A" || getUser.ride_class_complete === true) {
+      //clear the driver from ontrip
+      let updateDriver = await driverModel.findOneAndUpdate({ user_id: ws._user_data.token },
+         { on_trip: "no", 'location.coordinates': [payload.longitude, payload.latitude] },
+         { new: true }).catch(e => ({ error: e }))
+      //check if it's not updated
+      if (!updateDriver || updateDriver.error) {
+         helpers.outputResponse(ws, {
+            action: requestAction.inputError,
+            error: "Your status could not be set to available. Please contact support"
+         })
+      }
    }
+
    // update the trip data for the riders
    if (["A", "B", "C", "D"].indexOf(rideClass) > -1) {
       //if it's a complete ride
-      if (payload.ride_class_complete) {
-         //split the fare amoungst the riders
-         eachFare = Math.round(payload.class_complete === "B" ? totalFare / 2 :
-            payload.class_complete === "C" ? totalFare / 3 : totalFare / 4)
+      if (getUser.ride_class_complete === true) {
          //update the data to arrive pickup
-         updateData = await tripModel.TripRequests.findOneAndUpdate({ _id: payload.trip_id, 'riders.rider_id': payload.rider_id },
-            {
-               $set: {
-                  'riders.$[].status': 'completed',
-                  'riders.$[].stage': 5,
-                  'riders.$[].end_trip_at': endTime,
-                  'riders.$[].end_time': totalTimeCovered,
-                  'riders.$[].total_distance': totalDstCovered,
-                  'riders.$[].fare': eachFare,
-                  'riders.$[].action': requestAction.driverEndRide,
-               },
-               ride_status: "completed"
-            }, { new: true }).catch(e => ({ error: e }))
+         updateData = await tripModel.TripRequests.findOneAndUpdate({ _id: payload.trip_id, 'riders.rider_id': payload.rider_id }, {
+            $set: {
+               'riders.$[].status': 'completed',
+               'riders.$[].stage': 5,
+               'riders.$[].end_trip_at': endTime,
+               'riders.$[].end_time': totalTimeCovered,
+               'riders.$[].total_distance': totalDstCovered,
+               'riders.$[].fare': totalFare,
+               'riders.$[].action': requestAction.driverEndRide,
+            },
+            ride_status: "completed"
+         }, { new: true }).catch(e => ({ error: e }))
       } else {
          //update the data to arrive pickup
-         updateData = await tripModel.TripRequests.findOneAndUpdate({ _id: payload.trip_id, 'riders.rider_id': payload.rider_id },
-            {
-               $set: {
-                  'riders.$.status': 'completed',
-                  'riders.$.stage': 5,
-                  'riders.$.end_trip_at': endTime,
-                  'riders.$.end_time': totalTimeCovered,
-                  'riders.$.total_distance': totalDstCovered,
-                  'riders.$.fare': totalFare,
-                  'riders.$.action': requestAction.driverEndRide,
-               },
-               ride_status: rideClass === "A" ? "completed" :
-                  (rideClass === "B" && dropOffRiders.length === 1) ? "completed" :
-                     (rideClass === "C" && dropOffRiders.length === 2) ? "completed" :
-                        (rideClass === "D" && dropOffRiders.length === 3) ? "completed" : "on_ride"
-            }, { new: true }).catch(e => ({ error: e }))
+         updateData = await tripModel.TripRequests.findOneAndUpdate({ _id: payload.trip_id, 'riders.rider_id': payload.rider_id }, {
+            $set: {
+               'riders.$.status': 'completed',
+               'riders.$.stage': 5,
+               'riders.$.end_trip_at': endTime,
+               'riders.$.end_time': totalTimeCovered,
+               'riders.$.total_distance': totalDstCovered,
+               'riders.$.fare': totalFare,
+               'riders.$.action': requestAction.driverEndRide,
+            },
+            ride_status: rideClass === "A" ? "completed" :
+               (rideClass === "B" && dropOffRiders.length === 1) ? "completed" :
+                  (rideClass === "C" && dropOffRiders.length === 2) ? "completed" :
+                     (rideClass === "D" && dropOffRiders.length === 3) ? "completed" : "on_ride"
+         }, { new: true }).catch(e => ({ error: e }))
       }
    } else {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Unknown Class" })
@@ -765,7 +745,7 @@ driverMethod.EndRide = async (ws, payload) => {
    if ((rideClass === "B" && dropOffRiders.length === 1) ||
       (rideClass === "C" && dropOffRiders.length === 2) ||
       (rideClass === "D" && dropOffRiders.length === 3) ||
-      rideClass === "A") {
+      rideClass === "A" || getUser.ride_class_complete === true) {
       let addDriverKM = await tripModel.DriverWorkHours.create({
          user_id: ws._user_data.token,
          trip_id: payload.trip_id,
@@ -783,15 +763,16 @@ driverMethod.EndRide = async (ws, payload) => {
       start_time: updateData.updatedAt
    }
    //if the ride is a class complete
-   if (payload.ride_class_complete) {
+   if (updateData.ride_class_complete === true) {
       //send the fare to all riders
       for (let i of updateData.riders) {
          if (i.status !== 'cancel') {
             if (socketUser.online[i.rider_id]) {
                helpers.outputResponse(ws, {
                   ...sendData,
-                  rider_id: i.rider_id, fare: eachFare,
-                  class_complete: payload.class_complete
+                  rider_id: i.rider_id, fare: totalFare,
+                  class: updateData.ride_class,
+                  class_complete: updateData.ride_class
                }, socketUser.online[i.rider_id])
             }
          }
@@ -804,6 +785,10 @@ driverMethod.EndRide = async (ws, payload) => {
    }
    //send the response to the driver
    sendData.action = requestAction.driverEndRideSuccessfully
+   //if the trip is class complete, send total fare to the driver
+   if (updateData.ride_class_complete === true) {
+      sendData.fare = updateData.ride_class === "B" ? totalFare * 2 : updateData.ride_class === "C" ? totalFare * 3 : totalFare * 4
+   }
    helpers.outputResponse(ws, sendData)
 }
 
