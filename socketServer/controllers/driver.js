@@ -38,6 +38,7 @@ driver.setOnlineStatusTem = async (ws, payload) => {
    let status = helpers.getInputValueString(payload, 'status')
    let email = helpers.getInputValueString(payload, 'email')
    let name = helpers.getInputValueString(payload, 'name')
+   let phone = helpers.getInputValueString(payload, 'phone')
    let plateNo = helpers.getInputValueString(payload, 'plateNo')
    let driverId = ws._user_data.token
 
@@ -64,6 +65,7 @@ driver.setOnlineStatusTem = async (ws, payload) => {
             user_email: email,
             user_name: name,
             user_approve: true,
+            user_phone: phone,
             car_plate_number: plateNo,
             location: { type: "Point", coordinates: [lon, lat] },
             online: true,

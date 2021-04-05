@@ -15,12 +15,10 @@ const drivers = new Schema({
    },
    user_name: {
       type: String,
-      // required: true,
       maxlength: 45
    },
    user_phone: {
       type: String,
-      // required: true,
       maxlength: 16
    },
    user_approve: {

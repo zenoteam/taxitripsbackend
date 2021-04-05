@@ -594,12 +594,13 @@ trip.acceptDelayRide = async (ws, payload) => {
    //send the response to the driver and the user
    if (socketUser.online[driver_id]) {
       //update the trip to delay
+      let t = new Date().toISOString()
       //update the data to arrive pickup
       let updateData = await tripModel.TripRequests.findOneAndUpdate({ _id: trip_id },
          {
             ride_status: "delay",
             $set: {
-               'riders.0.delay_trip_at': new Date().toISOString(),
+               'riders.0.delay_trip_at': t,
                'riders.0.action': requestAction.delayRideRequestAccepted
             }
          },
@@ -618,7 +619,7 @@ trip.acceptDelayRide = async (ws, payload) => {
       //send to the rider
       helpers.outputResponse(ws, {
          action: requestAction.delayRideRequestAccepted,
-         trip_id,
+         trip_id, delay_trip_at: t
       })
    } else {
       helpers.outputResponse(ws, {
@@ -682,7 +683,7 @@ trip.acceptContinueDelayRide = async (ws, payload) => {
    if (!trip_id || trip_id.length !== 24) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Trip id is required" })
    }
-   if (!driver_id || trip_id.length < 5) {
+   if (!driver_id || driver_id.length < 5) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Driver id is required" })
    }
 
