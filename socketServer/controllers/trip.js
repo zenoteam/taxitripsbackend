@@ -587,7 +587,7 @@ trip.acceptDelayRide = async (ws, payload) => {
    if (!trip_id || trip_id.length !== 24) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Trip id is required" })
    }
-   if (!driver_id || trip_id.length < 5) {
+   if (!driver_id || driver_id.length < 5) {
       return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Driver id is required" })
    }
 
