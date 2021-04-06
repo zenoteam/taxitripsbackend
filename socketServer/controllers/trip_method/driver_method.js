@@ -112,7 +112,7 @@ driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
       }
    ]).catch(e => ({ error: e }))
 
-   console.log(saveNotify)
+   // console.log(saveNotify)
 
    // send response to the driver
    let sendData = {
@@ -573,7 +573,7 @@ driverMethod.ArrivePickUp = async (ws, payload) => {
       }
    ]).catch(e => ({ error: e }))
 
-   console.log(saveNotify)
+   // console.log(saveNotify)
 
    //also send to other riders
    for (let i of updateData.riders) {
@@ -657,7 +657,7 @@ driverMethod.StartRide = async (ws, payload) => {
    }
    let saveNotify = await notificationModel.Notifications.collection.insertMany(MsgText).catch(e => ({ error: e }))
 
-   console.log(saveNotify)
+   // console.log(saveNotify)
 
 
    //send the response to the rider(s)
@@ -924,7 +924,7 @@ driverMethod.CancelRide = async (ws, payload) => {
          }
       ]).catch(e => ({ error: e }))
 
-      console.log(saveNotify)
+      // console.log(saveNotify)
 
       //send the response to the appropriate user
       if ((userType === "driver" && socketUser.online[payload.rider_id]) ||
