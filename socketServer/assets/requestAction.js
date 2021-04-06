@@ -32,6 +32,7 @@ module.exports = {
    newRideJoin: "new_rider_join_trip",
    pendingTrip: "pending_trip_request",
    newChatMessage: "new_chat_message",
+   newChatMessageSent: "new_chat_message_sent_succesfully",
    newNotification: "new_notification_message",
    userNotification: "user_notification_message",
    clearNotification: "user_notification_cleared",

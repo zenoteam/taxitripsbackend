@@ -88,6 +88,7 @@ user.sendChat = async (ws, payload) => {
    //send the message to the recipient
    if (socketUser.online[recipient_id]) {
       helpers.outputResponse(ws, sendData, socketUser.online[recipient_id])
+      helpers.outputResponse(ws, { action: requestAction.newChatMessageSent, created, recipient_id })
    } else {
       helpers.outputResponse(ws, {
          action: requestAction.inputError,
