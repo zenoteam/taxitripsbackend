@@ -102,13 +102,17 @@ driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
    let saveNotify = await notificationModel.Notifications.collection.insertMany([
       {
          user_id: payload.rider_id,
+         status: [],
          title: payload.name + " accepted your request",
-         body: `Class ${pendingData.class} request from ${pendingData.start_address} to ${pendingData.end_address}`
+         body: `Class ${pendingData.class} request from ${pendingData.start_address} to ${pendingData.end_address}`,
+         createdAt: new Date().toISOString()
       },
       {
          user_id: ws._user_data.token,
+         status: [],
          title: `You accepted ${pendingData.name}'s request`,
-         body: `Class ${pendingData.class} request from ${pendingData.start_address} to ${pendingData.end_address}`
+         body: `Class ${pendingData.class} request from ${pendingData.start_address} to ${pendingData.end_address}`,
+         createdAt: new Date().toISOString()
       }
    ]).catch(e => ({ error: e }))
 
@@ -569,7 +573,9 @@ driverMethod.ArrivePickUp = async (ws, payload) => {
       {
          user_id: payload.rider_id,
          title: "Driver arrived your location",
-         body: `Driver has arrived your location for a pickup`
+         body: `Driver has arrived your location for a pickup`,
+         status: [],
+         createdAt: new Date().toISOString()
       }
    ]).catch(e => ({ error: e }))
 
@@ -652,7 +658,9 @@ driverMethod.StartRide = async (ws, payload) => {
       MsgText.push({
          user_id: i.rider_id,
          title: "Ongoing Trip",
-         body: `Enjoy your trip. Feel free to give use feedback about your trip`
+         body: `Enjoy your trip. Feel free to give use feedback about your trip`,
+         status: [],
+         createdAt: new Date().toISOString()
       })
    }
    let saveNotify = await notificationModel.Notifications.collection.insertMany(MsgText).catch(e => ({ error: e }))
@@ -920,7 +928,9 @@ driverMethod.CancelRide = async (ws, payload) => {
          {
             user_id: userType === "driver" ? payload.rider_id : cancelTrip.driver_id,
             title: "Trip Canceled",
-            body: `${userType === "driver" ? "Driver" : "Rider"} canceled trip`
+            body: `${userType === "driver" ? "Driver" : "Rider"} canceled trip`,
+            status: [],
+            createdAt: new Date().toISOString()
          }
       ]).catch(e => ({ error: e }))
 
