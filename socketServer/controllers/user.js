@@ -13,7 +13,7 @@ const user = {}
 user.getNotification = async (ws, payload) => {
    let userID = ws._user_data.token //get the user
    //get the notifications
-   let getData = await NotificationModel.Notifications.arguments([
+   let getData = await NotificationModel.Notifications.aggregate([
       { $match: { user_id: { $in: [userID, 'all'] } } },
       {
          $project: {
