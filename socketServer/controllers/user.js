@@ -9,7 +9,7 @@ const driverModel = require('../../models/driver');
 const user = {}
 
 
-
+//for pulling the user notification
 user.getNotification = async (ws, payload) => {
    let userID = ws._user_data.token //get the user
    //get the notifications
@@ -34,6 +34,33 @@ user.getNotification = async (ws, payload) => {
    })
 }
 
+//for clearing a notificaton
+user.clearNotification = async (ws, payload) => {
+   let userID = ws._user_data.token
+   let id = helpers.getInputValueString(payload, "notification_id")
+
+   //check if the notification ID is not submitted
+   if (!id || id.length !== 24) {
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "A valid notification id is required"
+      })
+   }
+   // update the data
+   let updateData = await NotificationModel.Notifications.findOneAndUpdate({ _id: id, status: { $nin: [userID] } },
+      { $push: { status: userID } }).catch(e => ({ error: e }))
+
+   //check if there's an error
+   if (updateData && updateData.error) {
+      return helpers.outputResponse(ws, { action: requestAction.serverError })
+   }
+   helpers.outputResponse(ws, {
+      action: requestAction.clearNotification,
+      notification_id: id
+   })
+}
+
+//for sending a chat to the user
 user.sendChat = async (ws, payload) => {
    let message = helpers.getInputValueString(payload, "message")
    let recipient_id = helpers.getInputValueString(payload, "recipient_id")

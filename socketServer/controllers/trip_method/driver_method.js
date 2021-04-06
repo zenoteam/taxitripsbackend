@@ -3,6 +3,8 @@ const requestAction = require('../../assets/requestAction')
 const driverModel = require('../../../models/driver')
 const socketUser = require('../../assets/socketUser')
 const tripModel = require('../../../models/trip_request')
+const notificationModel = require('../../../models/notification')
+
 
 const driverMethod = {}
 //for getting rider full data
@@ -90,6 +92,27 @@ driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
          destination: { coordinates: [pendingData.end_lon, pendingData.end_lat] }
       }]
    }).catch(e => ({ error: e }))
+
+   //check if there's an error
+   if (saveTrip && saveTrip.error) {
+      return helpers.outputResponse(ws, { action: requestAction.serverError })
+   }
+
+   //save the notification
+   let saveNotify = await notificationModel.Notifications.collection.insertMany([
+      {
+         user_id: payload.rider_id,
+         title: payload.name + " accepted your request",
+         body: `Class ${pendingData.class} request from ${pendingData.start_address} to ${pendingData.end_address}`
+      },
+      {
+         user_id: ws._user_data.token,
+         title: `You accepted ${pendingData.name}'s request`,
+         body: `Class ${pendingData.class} request from ${pendingData.start_address} to ${pendingData.end_address}`
+      }
+   ])
+
+   console.log(saveNotify)
 
    // send response to the driver
    let sendData = {

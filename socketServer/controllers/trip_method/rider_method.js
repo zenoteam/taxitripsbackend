@@ -4,6 +4,7 @@ const driverModel = require('../../../models/driver')
 const TripModel = require('../../../models/trip_request')
 const socketUser = require('../../assets/socketUser')
 
+
 const riderMethod = {}
 
 //for delaying a request for 30 while sending to the driver

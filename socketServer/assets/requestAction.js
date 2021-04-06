@@ -34,6 +34,7 @@ module.exports = {
    newChatMessage: "new_chat_message",
    newNotification: "new_notification_message",
    userNotification: "user_notification_message",
+   clearNotification: "user_notification_cleared",
    chatMessage: "chat_message",
    inputError: "input_error",
    serverError: "server_error",
