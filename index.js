@@ -6,7 +6,7 @@ const driverModel = require('./models/driver')
 
 
 //create http server
-const app = http.createServer(httpServer)
+const app = http.createServer(httpServer.createServer)
 
 //create Socket.io server
 socketServer.createServer(app)

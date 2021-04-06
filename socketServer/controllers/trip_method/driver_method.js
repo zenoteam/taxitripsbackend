@@ -110,7 +110,7 @@ driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
          title: `You accepted ${pendingData.name}'s request`,
          body: `Class ${pendingData.class} request from ${pendingData.start_address} to ${pendingData.end_address}`
       }
-   ])
+   ]).catch(e => ({ error: e }))
 
    console.log(saveNotify)
 
@@ -564,6 +564,17 @@ driverMethod.ArrivePickUp = async (ws, payload) => {
       return helpers.outputResponse(ws, { action: requestAction.serverError })
       //do somthing here
    }
+   //save the notification
+   let saveNotify = await notificationModel.Notifications.collection.insertMany([
+      {
+         user_id: payload.rider_id,
+         title: "Driver arrived your location",
+         body: `Driver arrived your location has arrived your location for a pickup`
+      }
+   ]).catch(e => ({ error: e }))
+
+   console.log(saveNotify)
+
    //also send to other riders
    for (let i of updateData.riders) {
       if (i.status !== 'cancel') {
@@ -634,6 +645,21 @@ driverMethod.StartRide = async (ws, payload) => {
       //do somthing here
       return helpers.outputResponse(ws, { action: requestAction.serverError, })
    }
+
+   //save the notification
+   let MsgText = []
+   for (let i of payload.riders) {
+      MsgText.push({
+         user_id: i.rider_id,
+         title: "Ongoing Trip",
+         body: `Enjoy your trip. Feel free to give use feedback about your trip`
+      })
+   }
+   let saveNotify = await notificationModel.Notifications.collection.insertMany(MsgText).catch(e => ({ error: e }))
+
+   console.log(saveNotify)
+
+
    //send the response to the rider(s)
    for (let i of payload.riders) {
       if (socketUser.online[i.rider_id]) {
@@ -888,6 +914,17 @@ driverMethod.CancelRide = async (ws, payload) => {
       //free the driver 
       let updateDriver = await driverModel.findOneAndUpdate({ user_id: cancelTrip.driver_id },
          { on_trip: onTripUser.length === 1 ? "no" : "waiting" }).catch(e => ({ error: e }))
+
+      //save the notification
+      let saveNotify = await notificationModel.Notifications.collection.insertMany([
+         {
+            user_id: userType === "driver" ? payload.rider_id : cancelTrip.driver_id,
+            title: "Trip Canceled",
+            body: `${userType === "driver" ? "Driver" : "Rider"} canceled trip`
+         }
+      ]).catch(e => ({ error: e }))
+
+      console.log(saveNotify)
 
       //send the response to the appropriate user
       if ((userType === "driver" && socketUser.online[payload.rider_id]) ||
