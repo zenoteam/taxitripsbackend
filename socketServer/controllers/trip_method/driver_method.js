@@ -569,7 +569,7 @@ driverMethod.ArrivePickUp = async (ws, payload) => {
       {
          user_id: payload.rider_id,
          title: "Driver arrived your location",
-         body: `Driver arrived your location has arrived your location for a pickup`
+         body: `Driver has arrived your location for a pickup`
       }
    ]).catch(e => ({ error: e }))
 
