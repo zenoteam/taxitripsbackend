@@ -44,7 +44,7 @@ socket.createServer = (httpServer) => {
       }
       //check the token with the auth service
       let checkToken = await helpers.makeHTTPRequest({
-         uri: 'http://212.71.246.199:8000/api/verify/',
+         uri: 'http://taxiusersbackend-microservices.apps.waaron.com/api/verify/',
          method: 'GET', headers: { "Authorization": userToken }
       })
       // let checkToken = await socket.verifyBearerToken(userToken)

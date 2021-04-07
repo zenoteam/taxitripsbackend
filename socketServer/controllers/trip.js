@@ -986,19 +986,43 @@ trip.shareRideInvite = async (ws, payload) => {
    }
    //get the data from the server
    let getUser = await helpers.makeHTTPRequest({
-      uri: "",
+      uri: `http://taxipassengerbackend-microservices.apps.waaron.com/api/passengers/${phone}`,
       method: "GET", headers: { "Authorization": token }
    })
+   let inviteeData;
+   try {
+      inviteeData = typeof getUser === "object" ? getUser : JSON.parse(getUser)
+   } catch (e) {
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "Invitee data not found"
+      })
+   }
+   //check if the data no found
+   if (!inviteeData || !inviteeData.authId) {
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "Invitee data not found"
+      })
+   }
    //send 
    let sendData = {
       ...payload,
       action: requestAction.rideInvitation,
       host_id: ws._user_data.token,
    }
-   if (true) {
-      helpers.outputResponse(ws, sendData)
+   //if the invitee is online
+   if (socketUser.online[inviteeData.authId]) {
+      helpers.outputResponse(ws, sendData, socketUser.online[inviteeData.authId])
+      helpers.outputResponse(ws, {
+         action: requestAction.rideInvitationSent,
+         invitee_phone: phone, class: payload.class
+      })
    } else {
-      helpers.outputResponse(ws, { action: requestAction.inputError, error: "The host is not reachable at the moment" })
+      helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "The user is not reachable at the moment. Please ensure the user has his/her Lagos Ride App opened"
+      })
    }
 }
 
@@ -1036,8 +1060,59 @@ trip.acceptRideInvite = async (ws, payload) => {
    //check if the host is online
    if (socketUser.online[host_id]) {
       helpers.outputResponse(ws, sendData, socketUser.online[host_id])
+      helpers.outputResponse(ws, {
+         action: requestAction.riderAcceptRideInviteSuccessfully,
+      })
    } else {
-      helpers.outputResponse(ws, { action: requestAction.inputError, error: "The host is not reachable at the moment" })
+      helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "The host is not reachable at the moment"
+      })
+   }
+}
+
+trip.cancelRideInvite = async (ws, payload) => {
+
+   let phone = helpers.getInputValueString(payload, "phone")
+   let name = helpers.getInputValueString(payload, "name")
+   let host_id = helpers.getInputValueString(payload, "host_id")
+
+   //check the phone number
+   if (!phone || phone.length !== 11) {
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "Phone number is required"
+      })
+   }
+   //check the phone number
+   if (!name) {
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "Name is required"
+      })
+   }
+   if (!host_id) {
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "Host id is required"
+      })
+   }
+   let sendData = {
+      ...payload,
+      action: requestAction.riderCancelRideInvite,
+      invitee_phone: phone,
+   }
+   //check if the host is online
+   if (socketUser.online[host_id]) {
+      helpers.outputResponse(ws, sendData, socketUser.online[host_id])
+      helpers.outputResponse(ws, {
+         action: requestAction.riderCancelRideInviteSuccessfully,
+      })
+   } else {
+      helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "The host is not reachable at the moment"
+      })
    }
 }
 
