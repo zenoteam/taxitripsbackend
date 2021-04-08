@@ -98,11 +98,14 @@ socket.createServer = (httpServer) => {
          delete socketUsers.online[userData.token]
          // if the user is a driver
          if (userData.user_type === 'driver') {
+            console.log(socketUsers.online)
             //take a sleep for 10sec and wait
             await socket.takeASleep(10000)
             //if not reconnected
             if (!socketUsers.online[userData.token]) {
                //update the driver to off
+               console.log('setting Diver to offline')
+
                await driverModel.findOneAndUpdate({ user_id: userData.token },
                   { online: false, }, { new: true }).catch(e => ({ error: e }))
             }

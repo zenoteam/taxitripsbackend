@@ -183,7 +183,10 @@ user.getOnlineStatus = async (ws, payload) => {
    if (!getStatus || getStatus.error) {
       helpers.outputResponse(ws, { action: requestAction.driverStatusSet, status: 'off' })
    } else {
-      // console.log(getStatus)
+      if (getStatus.online) {
+         socketUser.online[driverId] = ws.id
+      }
+      console.log(socketUser.online)
       helpers.outputResponse(ws, { action: requestAction.driverStatusSet, status: getStatus.online ? 'on' : 'off' })
    }
 
