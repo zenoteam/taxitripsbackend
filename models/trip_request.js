@@ -108,7 +108,7 @@ const TripRatings = new Schema({
 //for rating
 const DriverWorkHours = new Schema({
    id: Schema.Types.ObjectId,
-   user_id: {
+   driver_id: {
       type: String,
       required: true
    },

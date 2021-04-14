@@ -804,7 +804,7 @@ driverMethod.EndRide = async (ws, payload) => {
       (rideClass === "D" && dropOffRiders.length === 3) ||
       rideClass === "A" || getUser.ride_class_complete === true) {
       let addDriverKM = await tripModel.DriverWorkHours.create({
-         user_id: ws._user_data.token,
+         driver_id: ws._user_data.token,
          trip_id: payload.trip_id,
          km: payload.total_distance,
          time: payload.end_time
