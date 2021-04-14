@@ -10,7 +10,7 @@ const app = http.createServer(httpServer.createServer)
 
 //create Socket.io server
 socketServer.createServer(app)
-let port = process.env.PORT || 4000
+let port = process.env.PORT || 8080
 app.listen(port, () => {
    console.log('Server listening on port ' + port)
 });
