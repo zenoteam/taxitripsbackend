@@ -986,7 +986,7 @@ trip.shareRideInvite = async (ws, payload) => {
    }
    //get the data from the server
    let getUser = await helpers.makeHTTPRequest({
-      uri: `http://taxipassengerbackend-microservices.apps.waaron.com/api/passengers/${phone}`,
+      uri: `http://taxipassengerbackend-microservices.apps.waaron.com/api/passengers/phoneNumber/?phoneNumber=${phone}`,
       method: "GET", headers: { "Authorization": token }
    })
    let inviteeData;
@@ -995,6 +995,7 @@ trip.shareRideInvite = async (ws, payload) => {
    } catch (e) {
       return helpers.outputResponse(ws, {
          action: requestAction.inputError,
+         invitee_phone: phone,
          error: "Invitee data not found"
       })
    }
@@ -1002,6 +1003,7 @@ trip.shareRideInvite = async (ws, payload) => {
    if (!inviteeData || !inviteeData.authId) {
       return helpers.outputResponse(ws, {
          action: requestAction.inputError,
+         invitee_phone: phone,
          error: "Invitee data not found"
       })
    }
@@ -1021,6 +1023,7 @@ trip.shareRideInvite = async (ws, payload) => {
    } else {
       helpers.outputResponse(ws, {
          action: requestAction.inputError,
+         invitee_phone: phone,
          error: "The user is not reachable at the moment. Please ensure the user has his/her Lagos Ride App opened"
       })
    }
