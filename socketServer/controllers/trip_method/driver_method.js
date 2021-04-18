@@ -68,10 +68,13 @@ driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
    if (pendingData.class_complete) {
       //push the other riders data to the array
       for (let i of pendingData.riders) {
-         riderData.push(getRiderData(payload, {
+         riderData.push(getRiderData({
+            ...payload,
+            rider_id: i.rider_id
+         }, {
             ...pendingData,
             name: i.name, phone: i.phone, sex: i.sex,
-            avatar: i.avatar, rider_id: i.rider_id
+            avatar: i.avatar, rider_id: i.rider_id,
          }))
       }
    } else {

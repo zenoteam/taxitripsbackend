@@ -30,38 +30,65 @@ trip.requestDriver = (ws, payload) => {
 
    //check and validate the input
    if (isNaN(startLongitude) || isNaN(startLatitude)) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid start longitude and latitude is required" })
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "A valid start longitude and latitude is required"
+      })
    }
    //check and validate the input
    if (isNaN(endLongitude) || isNaN(endLatitude)) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid end longitude and latitude is required" })
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "A valid end longitude and latitude is required"
+      })
    }
    //check if the name is empty
    if (!name || name.length < 2) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Name is required" })
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "Name is required"
+      })
    }
    //check if the name is empty
    if (!startAdrr || startAdrr.length < 2) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Start address is required" })
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "Start address is required"
+      })
    }
    //check if the name is empty
    if (!endAddr || endAddr.length < 2) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "End address is required" })
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "End address is required"
+      })
    }
    if (!phone || phone.length < 10) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Phone is required" })
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "Phone is required"
+      })
    }
    //check if the name is empty
    if (!avatar) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Avatar is required" })
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "Avatar is required"
+      })
    }
    //check if there's no estimated time
    if (isNaN(est_time)) {
-      return helpers.outputResponse(ws, { error: "Estimated time required. e.g est_time:3020", action: requestAction.inputError })
+      return helpers.outputResponse(ws, {
+         error: "Estimated time required. e.g est_time:3020",
+         action: requestAction.inputError
+      })
    }
    //check if there's no estimated fare
    if (!est_fare) {
-      return helpers.outputResponse(ws, { error: "Estimated fare required. e.g est_fare:300-500", action: requestAction.inputError })
+      return helpers.outputResponse(ws, {
+         error: "Estimated fare required. e.g est_fare:300-500",
+         action: requestAction.inputError
+      })
    }
    //check the class of ride
    if (["A", "B", "C", "D"].indexOf(rideClass) === -1) {
@@ -71,15 +98,24 @@ trip.requestDriver = (ws, payload) => {
    if (classComplete) {
       //check the class submitting
       if (["B", "C", "D"].indexOf(classComplete) === -1) {
-         return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid class complete" })
+         return helpers.outputResponse(ws, {
+            action: requestAction.inputError,
+            error: "Invalid class complete"
+         })
       }
       //check if the class complete is not same with the class
       if (payload.class !== payload.class_complete) {
-         return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Class complete and Class do not match" })
+         return helpers.outputResponse(ws, {
+            action: requestAction.inputError,
+            error: "Class complete and Class do not match"
+         })
       }
       //check if the riders are not submitted
       if (!(riders instanceof Array) || riders.length === 0) {
-         return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Riders data is required for ride complete" })
+         return helpers.outputResponse(ws, {
+            action: requestAction.inputError,
+            error: "Riders data is required for ride complete"
+         })
       }
       //check if the data not match
       if (classComplete === "B" && riders.length !== 2) {
