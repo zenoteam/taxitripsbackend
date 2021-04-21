@@ -4,5 +4,6 @@
 module.exports = {
    online: {},
    pendingTrip: {},
-   requestDriverTimer: {}
+   requestDriverTimer: {},
+   serverWS: {}
 }

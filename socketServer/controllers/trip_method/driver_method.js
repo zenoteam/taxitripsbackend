@@ -46,6 +46,18 @@ const getRiderData = (payload, pendingData) => {
    }
 }
 
+//for getting driver's data
+const getDriverData = (driverId, payload) => {
+   return {
+      driver_id: driverId,
+      lon: payload.lon,
+      lat: payload.lat,
+      name: payload.name,
+      phone: payload.phone,
+      email: payload.email,
+      avatar: payload.avatar
+   }
+}
 
 
 //function that handles class A ride acceptance for driver
@@ -82,10 +94,14 @@ driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
       riderData.rider = 1 //add the rider position
    }
 
+   //prepare driver's data
+   let driverData = getDriverData(driverId, payload)
+
    //save the trip data
    let saveTrip = await tripModel.TripRequests.create({
       driver_id: driverId,
       riders: riderData,
+      driver_data: driverData,
       ride_status: "on_pickup",
       ride_class: pendingData.class_complete ? pendingData.class_complete : "A",
       rider_compass: payload.rider_id,
@@ -185,9 +201,13 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
    let riderData = getRiderData(payload, pendingData)
    //Save the data in the database
    if (riderNumber === 1) {
+      //prepare driver's data
+      let driverData = getDriverData(driverId, payload)
+      //save the trip
       let saveTrip = await tripModel.TripRequests.create({
          driver_id: driverId,
          riders: riderData,
+         driver_data: driverData,
          ride_status: "waiting",
          ride_class: "B",
          rider_compass: payload.rider_id,
@@ -315,9 +335,13 @@ driverMethod.AcceptClassC = async (ws, payload, pendingData) => {
 
    //Save the data in the database
    if (riderNumber === 1) {
+      //prepare driver's data
+      let driverData = getDriverData(driverId, payload)
+      //save the trip
       let saveTrip = await tripModel.TripRequests.create({
          driver_id: driverId,
          riders: riderData,
+         driver_data: driverData,
          ride_status: "waiting",
          ride_class: "C",
          rider_compass: payload.rider_id,
@@ -440,8 +464,12 @@ driverMethod.AcceptClassD = async (ws, payload, pendingData) => {
 
    //Save the data in the database
    if (riderNumber === 1) {
+      //prepare driver's data
+      let driverData = getDriverData(driverId, payload)
+      //save the trip data
       let saveTrip = await tripModel.TripRequests.create({
          driver_id: driverId,
+         driver_data: driverData,
          riders: riderData,
          ride_status: "waiting",
          ride_class: "D",
@@ -696,7 +724,8 @@ driverMethod.EndRide = async (ws, payload) => {
    let endTime = new Date().toISOString()
    let updateData;
    //get the user that the trip is ending for
-   let getUser = await tripModel.TripRequests.findOne({ _id: payload.trip_id }, null, { lean: true }).catch(e => ({ error: e }))
+   let getUser = await tripModel.TripRequests.findOne({ _id: payload.trip_id },
+      null, { lean: true }).catch(e => ({ error: e }))
    //check if error
    if (!getUser || getUser.error) {
       return helpers.outputResponse(ws, { action: requestAction.serverError })
@@ -734,7 +763,11 @@ driverMethod.EndRide = async (ws, payload) => {
    }
 
    //sum the total fare
-   totalFare = Math.ceil(getTimeFare + getDstFare + getWaitingFare + baseFare)
+   totalFare = String(Math.ceil(getTimeFare + getDstFare + getWaitingFare + baseFare))
+   //replace the last digit with zero to round the paymant
+   totalFare = `${totalFare.substr(0, totalFare.length - 1)}0`
+   //parse the value make it number
+   totalFare = parseInt(totalFare)
 
    //get people that hv been dropped off
    let dropOffRiders = getUser.riders.filter(d => d.status === 'completed')
@@ -793,11 +826,17 @@ driverMethod.EndRide = async (ws, payload) => {
          }, { new: true }).catch(e => ({ error: e }))
       }
    } else {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Unknown Class" })
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "Unknown Class"
+      })
    }
    //check if it's not updated
    if (!updateData || updateData.error) {
-      helpers.outputResponse(ws, { action: requestAction.inputError, error: "Could not update the trip details" })
+      helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "Could not update the trip details"
+      })
       // return
       //do somthing here
    }
@@ -847,7 +886,8 @@ driverMethod.EndRide = async (ws, payload) => {
    sendData.action = requestAction.driverEndRideSuccessfully
    //if the trip is class complete, send total fare to the driver
    if (updateData.ride_class_complete === true) {
-      sendData.fare = updateData.ride_class === "B" ? totalFare * 2 : updateData.ride_class === "C" ? totalFare * 3 : totalFare * 4
+      sendData.fare = updateData.ride_class === "B" ? totalFare * 2 :
+         updateData.ride_class === "C" ? totalFare * 3 : totalFare * 4
    }
    helpers.outputResponse(ws, sendData)
 }

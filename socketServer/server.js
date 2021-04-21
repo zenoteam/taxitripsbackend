@@ -77,6 +77,8 @@ socket.createServer = (httpServer) => {
 
       //add the user to the online object using his unique id with the socket id for easiest communication
       socketUsers.online[ws._user_data.token] = ws.id;
+      //add the user as the server WS
+      socketUsers.serverWS = ws
       console.log('new connection', ws._user_data.token)
       //create incoming message event listener for the connected device
       ws.on("msg", data => {

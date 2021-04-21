@@ -879,18 +879,58 @@ trip.rateUser = async (ws, payload) => {
 trip.getEstimatedFare = (ws, payload) => {
    let est_time = helpers.getInputValueNumber(payload, 'est_time')
    let est_dst = helpers.getInputValueNumber(payload, 'est_dst')
+   let rideClass = helpers.getInputValueString(payload, 'class')
 
    if (!est_dst || isNaN(est_dst)) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid estimated distance is required" })
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "A valid estimated distance is required"
+      })
    }
    if (!est_time || isNaN(est_time)) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "A valid estimated time is required" })
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "A valid estimated time is required"
+      })
    }
+
+   //if the class is not provided
+   if (["A", "B", "C", "D"].indexOf(rideClass) === -1) {
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "A ride class is required"
+      })
+   }
+
    let getTimeFare = helpers.getTimeCoveredCharges(est_time, 15)
    let getDstFare = helpers.getDistanceCoveredCharges(est_dst / 1000, 50)
-   let total = Math.ceil(220 + getTimeFare + getDstFare);
-   let estFare = `${total}-${total + Math.ceil(total / 2)}`
-   return helpers.outputResponse(ws, { action: requestAction.tripEstimatedFare, fare: estFare })
+   let getTimeAndDstFare = getTimeFare + getDstFare
+   //split the fare based on class
+   switch (rideClass) {
+      case "B":
+         getTimeAndDstFare /= 2
+         break;
+      case "C":
+         getTimeAndDstFare /= 3
+         break;
+      case "D":
+         getTimeAndDstFare /= 4
+         break;
+      default:
+   }
+
+   //add the fare and the base fare
+   let total = Math.ceil(220 + getTimeAndDstFare);
+   //add a surge upper bound
+   let tripFare = `${total}-${Math.ceil(1.2 * total)}`
+   //replace the last digit with zero
+   tripFare = `${tripFare.substr(0, tripFare.length - 1)}0`
+   tripFare = tripFare.replace(/\d-/, "0-")
+
+   return helpers.outputResponse(ws, {
+      action: requestAction.tripEstimatedFare,
+      fare: tripFare
+   })
 }
 
 //function to get a pending trip
@@ -1065,6 +1105,7 @@ trip.shareRideInvite = async (ws, payload) => {
    }
 }
 
+
 trip.acceptRideInvite = async (ws, payload) => {
 
    let phone = helpers.getInputValueString(payload, "phone")
@@ -1110,11 +1151,12 @@ trip.acceptRideInvite = async (ws, payload) => {
    }
 }
 
+
 trip.cancelRideInvite = async (ws, payload) => {
 
    let phone = helpers.getInputValueString(payload, "phone")
    let name = helpers.getInputValueString(payload, "name")
-   let host_id = helpers.getInputValueString(payload, "host_id")
+   let riders = helpers.getInputValueArray(payload, "riders")
 
    //check the phone number
    if (!phone || phone.length !== 11) {
@@ -1130,10 +1172,10 @@ trip.cancelRideInvite = async (ws, payload) => {
          error: "Name is required"
       })
    }
-   if (!host_id) {
+   if (!(riders instanceof Array) || riders.length < 1) {
       return helpers.outputResponse(ws, {
          action: requestAction.inputError,
-         error: "Host id is required"
+         error: "Riders array auth id is required"
       })
    }
    let sendData = {
@@ -1141,18 +1183,19 @@ trip.cancelRideInvite = async (ws, payload) => {
       action: requestAction.riderCancelRideInvite,
       invitee_phone: phone,
    }
-   //check if the host is online
-   if (socketUser.online[host_id]) {
-      helpers.outputResponse(ws, sendData, socketUser.online[host_id])
-      helpers.outputResponse(ws, {
-         action: requestAction.riderCancelRideInviteSuccessfully,
-      })
-   } else {
-      helpers.outputResponse(ws, {
-         action: requestAction.inputError,
-         error: "The host is not reachable at the moment"
-      })
+
+   //send the cancel event to user
+   for (let j of riders) {
+      //send the event if the user is online
+      if (socketUser.online[j]) {
+         helpers.outputResponse(ws, sendData, socketUser.online[j])
+      }
    }
+
+   //send the response to the person that canceled
+   helpers.outputResponse(ws, {
+      action: requestAction.riderCancelRideInviteSuccessfully,
+   })
 }
 
 module.exports = trip;

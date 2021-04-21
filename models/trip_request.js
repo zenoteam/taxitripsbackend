@@ -8,6 +8,10 @@ const TripRequests = new Schema({
       type: String,
       required: true,
    },
+   driver_data: {
+      type: Object,
+      default: {}
+   },
    riders: {
       type: Array,
       default: [],
@@ -55,27 +59,17 @@ const TripRequests = new Schema({
          }
       },
    }],
-   created: {
-      type: String,
-      default: (new Date().toISOString()).substr(0, 10)
-   }
+   // created: {
+   //    type: String,
+   //    default: (new Date().toISOString()).substr(0, 10)
+   // }
 }, {
    timestamps: true,
    minimize: false,
    id: true,
 });
 TripRequests.index({ 'location.origin': '2dsphere', 'location.destination': '2dsphere' });
-// the riders field will be array of object. e.g below
-// {
-//    rider_id: "the-user-id-requesting-the-ride",
-//    name: "name-of-the-user",
-//    email: "email-of-the-user",
-//    phone: "phone-of-the-user",
-//    startLoc: "the-rider-pick-up-location",
-//    endLoc: "the-rider-destination",
-//    distance: "distance-of-the-journey",
-//    price: "amount-paid-for-the-trip",
-// }
+
 
 //for rating
 const TripRatings = new Schema({

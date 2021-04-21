@@ -24,7 +24,7 @@ user.getNotification = async (ws, payload) => {
          }
       },
       { $sort: { createdAt: -1 } },
-      { $limit: 50 }
+      { $limit: 100 }
    ])
 
    //fetch the user
@@ -33,6 +33,7 @@ user.getNotification = async (ws, payload) => {
       data: getData
    })
 }
+
 
 //for clearing a notificaton
 user.clearNotification = async (ws, payload) => {
@@ -59,6 +60,7 @@ user.clearNotification = async (ws, payload) => {
       notification_id: id
    })
 }
+
 
 //for sending a chat to the user
 user.sendChat = async (ws, payload) => {
@@ -97,6 +99,7 @@ user.sendChat = async (ws, payload) => {
    }
 }
 
+
 user.setOnlineStatus = async (ws, payload) => {
    let lon = helpers.getInputValueNumber(payload, 'longitude')
    let lat = helpers.getInputValueNumber(payload, 'latitude')
@@ -122,6 +125,7 @@ user.setOnlineStatus = async (ws, payload) => {
    }
    helpers.outputResponse(ws, { action: requestAction.driverStatusSet })
 }
+
 
 user.setOnlineStatusTem = async (ws, payload) => {
    let lon = helpers.getInputValueNumber(payload, 'longitude')
@@ -173,6 +177,7 @@ user.setOnlineStatusTem = async (ws, payload) => {
    }
    helpers.outputResponse(ws, { action: requestAction.driverStatusSet, status })
 }
+
 
 user.getOnlineStatus = async (ws, payload) => {
    let driverId = ws._user_data.token
