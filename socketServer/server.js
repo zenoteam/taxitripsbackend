@@ -20,20 +20,6 @@ socket.createServer = (httpServer) => {
       let userToken = query.token ? query.token : null
       let userType = query.user_type ? query.user_type : null
 
-      // if (!userToken || userToken.length !== 30) {
-      //    return next(new Error('Unauthorized'));
-      // }
-      // //if the usertype is not valid
-      // if (['driver', 'user'].indexOf(userType) === -1) {
-      //    return next(new Error('Unauthorized'));
-      // }
-      // ws._user_data = {
-      //    token: userToken,
-      //    user_type: userType
-      // }
-      // return next()
-
-      // console.log(query)
       //if there's no token or the token is invalid, terminate the connection
       if (!userToken || userToken.indexOf('Bearer') === -1) {
          return next(new Error('Unauthorized'));
@@ -47,7 +33,6 @@ socket.createServer = (httpServer) => {
          uri: 'http://taxiusersbackend-microservices.apps.waaron.com/api/verify/',
          method: 'GET', headers: { "Authorization": userToken }
       })
-      // let checkToken = await socket.verifyBearerToken(userToken)
       console.log(checkToken)
       //if the token is invalid
       try {
@@ -61,11 +46,9 @@ socket.createServer = (httpServer) => {
             token: `${checkToken.auth_id}`,
             user_type: userType,
          }
-
       } catch (e) {
          return next(new Error('Unauthorized'));
       }
-
       //if after the auth validation and the connection is valid
       next() // allow the connection and route to the next listener
    });
