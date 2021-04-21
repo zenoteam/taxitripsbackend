@@ -4,7 +4,6 @@ const requestAction = require('../assets/requestAction')
 const riderMethod = require('./trip_method/rider_method')
 const socketUser = require('../assets/socketUser')
 const driverMethod = require('./trip_method/driver_method')
-const notificationModel = require('../../models/notification')
 const tripModel = require('../../models/trip_request')
 const dbConnector = require('../../models/dbconnector')
 
