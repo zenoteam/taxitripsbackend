@@ -6,7 +6,7 @@ const rAction = require('../../socketServer/assets/requestAction')
 
 
 
-class driver {
+class user {
    constructor(req, res, payload, userData) {
       this.method = req.method.toLowerCase()
       this.req = req
@@ -158,9 +158,9 @@ class driver {
       //replace the last digit with zero
       tripFare = `${tripFare.substr(0, tripFare.length - 1)}0`
       tripFare = tripFare.replace(/\d-/, "0-")
-      this.res.json({ status: "success", tripFare })
+      this.res.json({ status: "success", fare: tripFare })
 
    }
 }
 
-module.exports = driver;
+module.exports = user;
