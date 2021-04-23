@@ -65,7 +65,7 @@ socket.createServer = (httpServer) => {
       console.log('new connection', ws._user_data.token)
       //create incoming message event listener for the connected device
       ws.on("msg", data => {
-         console.log(data)
+         // console.log(data)
          //msg is event name where the connected device would have to fire when sending request to the server
          // data is a variable that returns the payload of the incoming request
          router.use(ws, data)
