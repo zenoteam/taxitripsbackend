@@ -68,9 +68,6 @@ user.sendChat = async (ws, payload) => {
    let recipient_id = helpers.getInputValueString(payload, "recipient_id")
    let created = helpers.getInputValueString(payload, "created")
 
-   let userType = ws._user_data.user_type
-   let userID = ws._user_data.token
-   let token = helpers.generateToken(30)
    //check the values
    if (!message || message.length < 1) {
       return helpers.outputResponse(ws, { action: "Message is required" })

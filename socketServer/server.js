@@ -78,19 +78,17 @@ socket.createServer = (httpServer) => {
          // but before doing that, we have to wait for some seconds or minutes. A number of things could disconnect a device
          // it could incoming call, bad network, app closure etc. So to avoid querying database now and then, we wait for reconnection.
          let userData = ws._user_data // this will return the user data added to the ws obj.
-         console.log('disconnnected', userData.token)
 
          delete socketUsers.online[userData.token]
          // if the user is a driver
          if (userData.user_type === 'driver') {
-            console.log(socketUsers.online)
+            console.log('A driver disconnnected. auth id', userData.token)
             //take a sleep for 10sec and wait
-            await socket.takeASleep(10000)
+            await socket.takeASleep(10000, userData.token)
             //if not reconnected
             if (!socketUsers.online[userData.token]) {
                //update the driver to off
-               console.log('setting Diver to offline')
-
+               console.log('Diver with auth id ' + userData.token + ' did not reconnect. Setting his/her status to offline')
                await driverModel.findOneAndUpdate({ user_id: userData.token },
                   { online: false, }, { new: true }).catch(e => ({ error: e }))
             }
@@ -102,8 +100,8 @@ socket.createServer = (httpServer) => {
 
 
 //for time delay
-socket.takeASleep = (time) => {
-   console.log('sleeping for ' + time + ' seconds')
+socket.takeASleep = (time, token) => {
+   console.log('wait for ' + time + ' seconds for ' + token + ' to reconnect')
    return new Promise((resolve, reject) => setTimeout(resolve, time))
 }
 //for verifying user token

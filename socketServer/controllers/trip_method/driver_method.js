@@ -47,15 +47,19 @@ const getRiderData = (payload, pendingData) => {
 }
 
 //for getting driver's data
-const getDriverData = (driverId, payload) => {
+const getDriverData = (driverData, payload) => {
    return {
-      driver_id: driverId,
+      driver_id: driverData.user_id,
       lon: payload.lon,
       lat: payload.lat,
       name: payload.name,
       phone: payload.phone,
       email: payload.email,
-      avatar: payload.avatar
+      avatar: payload.avatar,
+      rating: payload.rating,
+      car_plate_number: driverData.car_plate_number,
+      car_color: driverData.car_color,
+      car_model: driverData.car_model
    }
 }
 
@@ -66,7 +70,7 @@ driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
    let driverId = ws._user_data.token
    // update the driver's trip data
    let updateDriver = await driverModel.findOneAndUpdate({ user_id: driverId },
-      { on_trip: "yes" }, { new: true }).catch(e => ({ error: e }))
+      { on_trip: "yes" }, { new: true, lean: true }).catch(e => ({ error: e }))
    //if there's an error 
    if (!updateDriver || updateDriver.error) {
       return helpers.outputResponse(ws, { action: requestAction.serverError })
@@ -95,7 +99,7 @@ driverMethod.AcceptClassA = async (ws, payload, pendingData) => {
    }
 
    //prepare driver's data
-   let driverData = getDriverData(driverId, payload)
+   let driverData = getDriverData(updateDriver, payload)
 
    //save the trip data
    let saveTrip = await tripModel.TripRequests.create({
@@ -202,7 +206,7 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
    //Save the data in the database
    if (riderNumber === 1) {
       //prepare driver's data
-      let driverData = getDriverData(driverId, payload)
+      let driverData = getDriverData(updateDriver, payload)
       //save the trip
       let saveTrip = await tripModel.TripRequests.create({
          driver_id: driverId,
@@ -336,7 +340,7 @@ driverMethod.AcceptClassC = async (ws, payload, pendingData) => {
    //Save the data in the database
    if (riderNumber === 1) {
       //prepare driver's data
-      let driverData = getDriverData(driverId, payload)
+      let driverData = getDriverData(updateDriver, payload)
       //save the trip
       let saveTrip = await tripModel.TripRequests.create({
          driver_id: driverId,
@@ -465,7 +469,7 @@ driverMethod.AcceptClassD = async (ws, payload, pendingData) => {
    //Save the data in the database
    if (riderNumber === 1) {
       //prepare driver's data
-      let driverData = getDriverData(driverId, payload)
+      let driverData = getDriverData(updateDriver, payload)
       //save the trip data
       let saveTrip = await tripModel.TripRequests.create({
          driver_id: driverId,
