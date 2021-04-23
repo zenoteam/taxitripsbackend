@@ -1048,7 +1048,8 @@ trip.getPendingTrip = async (ws, payload) => {
             driver_data: 1
          }
       },
-      { $sort: { createdAt: -1 } }
+      { $sort: { createdAt: -1 } },
+      { $limit: 1 }
    ])
    if (getTrip && getTrip.error) {
       return
