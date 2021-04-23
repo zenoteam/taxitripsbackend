@@ -1031,14 +1031,6 @@ trip.getPendingTrip = async (ws, payload) => {
    //find the trip
    let getTrip = await tripModel.TripRequests.aggregate([
       { $match: queryBuilder },
-      // {
-      //    $lookup: {
-      //       from: "drivers",
-      //       localField: "driver_id",
-      //       foreignField: "user_id",
-      //       as: "driver_data"
-      //    }
-      // },
       {
          $project: {
             riders: 1,
