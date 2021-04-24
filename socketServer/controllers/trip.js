@@ -91,7 +91,10 @@ trip.requestDriver = (ws, payload) => {
    }
    //check the class of ride
    if (["A", "B", "C", "D"].indexOf(rideClass) === -1) {
-      return helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid class" })
+      return helpers.outputResponse(ws, {
+         action: requestAction.inputError,
+         error: "Invalid class"
+      })
    }
 
    if (classComplete) {
@@ -180,7 +183,10 @@ trip.requestDriver = (ws, payload) => {
          riderMethod.RequestClassD(ws, payload, []);
          break;
       default:
-         helpers.outputResponse(ws, { action: requestAction.inputError, error: "Invalid request" })
+         helpers.outputResponse(ws, {
+            action: requestAction.inputError,
+            error: "Invalid request"
+         })
    }
 
 }
@@ -1057,19 +1063,35 @@ trip.driverOnRequest = async (ws, payload) => {
    if (!socketUser.pendingTrip[rider_id]) { return }
    //check if there's no driver ID
    if (!driver_id || driver_id.length < 5) { return }
-   //if the request has been tried twice, don't try again
-   if (payload.trial === 2) { return }
    //get the pending data
    let getPendData = socketUser.pendingTrip[rider_id]
+
+   //check the trial, if it's 1, this means the application picked a driver whose distant
+   //matched riders pickup for a two current request. But allowing the driver to accept one
+   //while returning the other to the application to find another driver.
+   if (payload.trial === 1) {
+      if (getPendData) {
+         //clear the waiting timer request
+         clearTimeout(socketUser.requestDriverTimer[rider_id])
+         //make a new request
+         trip.requestDriver(getPendData.ws, getPendData)
+      }
+      return
+   } else if (payload.trial === 2) {
+      //if the trial is 2, this means the driver has a request he has not accepted and  
+      // the application has tried him with a different request that matched his pickup for two times.
+      //At this point, the application stop trying the driver and wait for the request waiting time to finish 
+      // so it can request for a new driver
+      return
+   }
+
    let sendData = {
       ...getPendData,
       action: requestAction.newTripRequest,
-      trial: 2,
-      driver: undefined,
-      request_time: undefined,
-      ws: undefined
+      trial: 2, driver: undefined,
+      request_time: undefined, ws: undefined
    }
-   //clear the timer request
+   //clear the waiting timer request
    clearTimeout(socketUser.requestDriverTimer[rider_id])
    delete socketUser.requestDriverTimer[rider_id] //remove from the object
    //open another wait time to check on the driver

@@ -249,6 +249,7 @@ riderMethod.RequestClassB = async (ws, payload, driversDidNotAccept = []) => {
          let sendData = {
             trip_id: td._id,
             class: td.ride_class,
+            rider: td.riders.length + 1,
             action: requestAction.rideRecommendation,
          }
          //delete pending data if any
@@ -468,7 +469,6 @@ riderMethod.RequestClassC = async (ws, payload, driversDidNotAccept = []) => {
       }
    }
 }
-
 
 // function that handles class B request
 riderMethod.RequestClassD = async (ws, payload, driversDidNotAccept = []) => {

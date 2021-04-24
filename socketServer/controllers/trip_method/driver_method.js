@@ -195,7 +195,8 @@ driverMethod.AcceptClassB = async (ws, payload, pendingData) => {
    //get the rider's position (if first rider or second rider)
    let riderNumber = pendingData.rider
    // update the driver's trip data
-   let updateDriver = await driverModel.findOneAndUpdate({ user_id: driverId }, { on_trip: riderNumber === 1 ? "waiting" : "yes" }, { new: true }).catch(e => ({ error: e }))
+   let updateDriver = await driverModel.findOneAndUpdate({ user_id: driverId },
+      { on_trip: riderNumber === 1 ? "waiting" : "yes" }, { new: true }).catch(e => ({ error: e }))
    //if there's an error 
    if (!updateDriver || updateDriver.error) {
       return helpers.outputResponse(ws, { action: requestAction.serverError })
